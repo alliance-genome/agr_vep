@@ -61,6 +61,7 @@ Follow the instructions in the INSTALL file.  No special setup is required.
         'taxn' => 559292,
         'file' => 'fungi',
     },
+- Change line 236 of `$PPH/update/unipfam.pl` from `die "ERROR: createdb: Missing or empty data file: $datafile\n" unless -s $datafile;` to `die "ERROR: createdb: Missing data file: $datafile\n" unless -e $datafile;`. Yeast and fruitfly don't have any domains in the swisspfam downloaded by this script.  To avoid errors when running PolyPhen, we want an empty pfam table to be created rather than the script dying.
 - Create species-specific config files.  These need to be saved in folders that are specified by `pph_conf_dir` in the initialisation script.  The changes required are listed below.
 - Change `UNIPROT` to the location of the uniref100 BLAST database in `databases.cnf`
 - Change `REFORGANISM` and `REFORGCOMMON` to the appropriate species in `options.cnf`
