@@ -29,15 +29,15 @@ sub fetch_input {
     my $pf_dbh = DBI->connect($pf_dsn, $self->required_param('pfdb_user'),
 			      $self->required_param('pfdb_pass')) or die $DBI::errstr;
 
-
-    my $remove_existing_predictions_query = qq{
-        DELETE pfp.* FROM protein_function_prediction pfp, analysis a
-           WHERE pfp.analysis_id = a.analysis_id AND a.analysis = ?
-    };
-    my $remove_existing_predictions_sth = $pf_dbh->prepare($remove_existing_predictions_query);
-    $remove_existing_predictions_sth->execute('sift') if $sift_run_type == FULL;
-    $remove_existing_predictions_sth->execute('pph') if $pph_run_type == FULL;
-
+    for my $table ('protein_function_prediction', 'valid_failure', 'analysis_attempt'){
+	my $remove_existing_results_query = 
+	    "DELETE t.* FROM " . $table . " t, analysis a " .
+	    "WHERE t.analysis_id = a.analysis_id AND a.analysis = ?";
+    
+	my $remove_existing_results_sth = $pf_dbh->prepare($remove_existing_results_query);
+	$remove_existing_results_sth->execute('sift') if $sift_run_type == FULL;
+	$remove_existing_results_sth->execute('pph') if $pph_run_type == FULL;
+    }
     
     my ($translation_seqs, $transcript_id_md5_map, $translation_md5_codontable_ids) =
 	$self->get_agr_translation_seqs();
@@ -82,10 +82,18 @@ sub fetch_input {
                     ON v.translation_md5_id = t.translation_md5_id
                 INNER JOIN analysis a
                     ON v.analysis_id = a.analysis_id
+            UNION
+            SELECT a.analysis, t.translation_md5
+                FROM analysis_attempt at
+                INNER JOIN translation_md5 t
+                    ON at.translation_md5_id = t.translation_md5_id
+                INNER JOIN analysis a
+                    ON at.analysis_id = a.analysis_id
+                WHERE at.attempt >= ?
         };
     
 	my $existing_sth = $pf_dbh->prepare($existing_md5s_query);
-	$existing_sth->execute();
+	$existing_sth->execute($self->required_param('max_attempts'));
 	while (my $existing_result = $existing_sth->fetchrow_arrayref){
 	    $existing_translation_md5s{$existing_result->[0]}{$existing_result->[1]} = 1;
 	}
@@ -110,6 +118,9 @@ sub fetch_input {
 	    push @pph_md5s, $md5 unless exists $existing_translation_md5s{'pph'}{$md5};
 	}
     }
+
+    $self->update_pfdb_attempts($pf_dbh, 'sift', \@sift_md5s);
+    $self->update_pfdb_attempts($pf_dbh, 'pph', \@pph_md5s);
     
     my %required_md5s = map {$_ => 1} (@sift_md5s, @pph_md5s);
         
@@ -473,6 +484,30 @@ sub trim_incomplete_codons {
     }
 	
     return $cds_seq;
+}
+
+
+sub update_pfdb_attempts {
+    my ($self, $pf_dbh, $analysis, $md5s) = @_;
+
+    my $update_attempts_query = qq{
+        INSERT INTO analysis_attempt (translation_md5_id, analysis_id, attempt)
+	    VALUES (
+                (SELECT translation_md5_id FROM translation_md5
+                    WHERE translation_md5 = ?),
+                (SELECT analysis_id FROM analysis
+                    WHERE analysis = ?),
+                1
+            )
+        ON DUPLICATE KEY
+            UPDATE attempt = attempt + 1
+    };
+    my $update_attempts_sth = $pf_dbh->prepare($update_attempts_query);
+    for my $md5 (@$md5s) {
+	$update_attempts_sth->execute($md5, $analysis);
+    }
+
+    return;
 }
 
 

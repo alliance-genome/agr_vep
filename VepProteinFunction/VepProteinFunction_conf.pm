@@ -83,6 +83,9 @@ sub default_options {
         sift_run_type           => UPDATE,
 	pph_run_type            => UPDATE,
         
+	# max. no. of attempts at SIFT/PolyPhen run before ignoring for update runs
+	max_attempts            => 3,
+
 	blast_max_workers       => 310,
 	sift_max_workers        => 190,
 	pph_max_workers         => 60,
@@ -135,13 +138,14 @@ sub pipeline_analyses {
         {   -logic_name => 'init_jobs',
             -module     => 'VepProteinFunction::InitJobs',
             -parameters => {
-		sift_working   => $self->o('sift_working'),
-		pph_working    => $self->o('pph_working'),
-                sift_run_type  => $self->o('sift_run_type'),
-		pph_run_type   => $self->o('pph_run_type'),
-		agr_fasta      => $self->o('agr_fasta'),
-		agr_gff        => $self->o('agr_gff'),
-		agr_bam        => $self->o('agr_bam'),
+		sift_working    => $self->o('sift_working'),
+		pph_working     => $self->o('pph_working'),
+                sift_run_type   => $self->o('sift_run_type'),
+		pph_run_type    => $self->o('pph_run_type'),
+		max_attempts    => $self->o('max_attempts'),
+		agr_fasta       => $self->o('agr_fasta'),
+		agr_gff         => $self->o('agr_gff'),
+		agr_bam         => $self->o('agr_bam'),
 		@common_params,
             },
 	    -input_ids => [{}],

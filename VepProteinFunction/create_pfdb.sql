@@ -18,16 +18,26 @@ CREATE TABLE analysis (
 );
 
 CREATE TABLE protein_function_prediction (
-       translation_md5_id	BIGINT	 NOT NULL	REFERENCES translation_md5(translation_md5_id),
-       analysis_id		BIGINT	 NOT NULL	REFERENCES analysis(analysis_id),
-       prediction_matrix	BLOB	 NOT NULL,
+       translation_md5_id	BIGINT	 	 NOT NULL	REFERENCES translation_md5(translation_md5_id),
+       analysis_id		SMALLINT	 NOT NULL	REFERENCES analysis(analysis_id),
+       prediction_matrix	BLOB	 	 NOT NULL,
        CONSTRAINT protein_function_prediction_pk
        		  PRIMARY KEY (translation_md5_id, analysis_id)
 );
 
 CREATE TABLE valid_failure (
-       translation_md5_id	BIGINT	NOT NULL	REFERENCES translation_md5(translation_md5_id),
-       analysis_id		BIGINT	NOT NULL	REFERENCES analysis(analysis_id)
+       translation_md5_id	BIGINT		NOT NULL	REFERENCES translation_md5(translation_md5_id),
+       analysis_id		SMALLINT	NOT NULL	REFERENCES analysis(analysis_id),
+       CONSTRAINT valid_failure_pk
+       		  PRIMARY KEY (translation_md5_id, analysis_id)
+);
+
+CREATE TABLE analysis_attempt (
+       translation_md5_id	BIGINT		NOT NULL	REFERENCES translation_md5(translation_md5_id),
+       analysis_id		SMALLINT	NOT NULL	REFERENCES analysis(analysis_id),
+       attempt			SMALLINT	NOT NULL,
+       CONSTRAINT analysis_attempts_pk
+       		  PRIMARY KEY (translation_md5_id, analysis_id)
 );
 
 INSERT INTO analysis (analysis)
