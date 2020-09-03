@@ -71,7 +71,7 @@ sub run {
     $exit_code = 0;
     for my $cmd (@commands) {
 	last if $exit_code != 0;
-	($exit_code, $stderr, $flat_cmd) = $self->run_system_command($cmd);
+	($exit_code, $stderr, $flat_cmd) = $self->run_system_command($cmd, {timeout => 36000});
     }
     $self->dbc->disconnect_when_inactive(0);
   

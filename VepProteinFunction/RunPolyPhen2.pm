@@ -45,7 +45,7 @@ sub run {
 
     # use -A option to disable polyphen's own LSF support (which conflicts with the hive)
     my $cmd = "$pph_dir/bin/run_pph.pl -A -d $output_dir -s $fasta_file $subs_file 1> $output_file";
-    my ($exit_code, $stderr, $flat_cmd) = $self->run_system_command($cmd);
+    my ($exit_code, $stderr, $flat_cmd) = $self->run_system_command($cmd, {'timeout' => 36000});
     
     $self->dbc->disconnect_when_inactive(0);
     

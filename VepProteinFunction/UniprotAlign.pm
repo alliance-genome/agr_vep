@@ -71,7 +71,7 @@ sub run {
 
     my $uniref_db = $self->required_param('pph_dir') . '/nrdb/uniref100';
     my $blast_cmd = "blastp -seg yes -evalue 1e-3 -num_threads 1 -max_target_seqs 1000 -outfmt 5 -db $uniref_db -query $blast_query -out $blast_out";
-    my ($exit_code, $stderr, $flat_cmd) = $self->run_system_command($blast_cmd);
+    my ($exit_code, $stderr, $flat_cmd) = $self->run_system_command($blast_cmd, {timeout => 36000});
 
     $self->dbc->disconnect_when_inactive(0);
 

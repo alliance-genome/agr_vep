@@ -58,7 +58,7 @@ sub run_weka {
     $self->dbc->disconnect_when_inactive(1);
 
     my $cmd = "$pph_dir/bin/run_weka.pl -l $model $input_file 1> $output_file";
-    my ($exit_code, $stderr, $flat_cmd) = $self->run_system_command($cmd);
+    my ($exit_code, $stderr, $flat_cmd) = $self->run_system_command($cmd, {'timeout' => 36000});
     
     $self->dbc->disconnect_when_inactive(0);
     
