@@ -23,7 +23,7 @@ sub run {
     $self->dbc->disconnect_when_inactive(1);
     my $cmd = "vep --cache --offline --$cache -i $input_file --fasta $fasta_file --vcf --sift b --polyphen b --hgvs --hgvsg --dir_cache $cache_dir --output_file $input_file.vep.vcf --force_overwrite --symbol --no_intergenic --distance 0";
     
-    $self->param('vep_substr_failure', 1);
+    $self->param('vep_failure', 1);
     my ($exit_code, $stderr, $flat_cmd) = $self->run_system_command($cmd);
     $self->dbc->disconnect_when_inactive(0);
 
@@ -36,8 +36,8 @@ sub run {
 	}
     }
     else {
-	$self->param('vep_substr_failure', 0);
-	$self->remove_header() unless $input_file =~ /_1\/chr1_001$/;
+	$self->param('vep_failure', 0);
+	$self->remove_header() unless $chr eq '1' and $input_file =~ /_001$/;
 	system("rm $input_file");
     }
     system("rm $input_file.vep.vcf_summary.html");
@@ -59,7 +59,7 @@ sub remove_header {
 sub write_output {
     my $self = shift;
 
-    if ($self->param('vep_substr_failure')) {
+    if ($self->param('vep_failure')) {
 	$self->dataflow_output_id([{vep_input_file => $self->param('vep_input_file')}], 2);
     }
 }

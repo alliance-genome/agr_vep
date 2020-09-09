@@ -22,13 +22,14 @@ sub run {
    
      my $cmd = "vep --cache --offline --$cache -i $input_file --fasta $fasta_file --vcf --sift b --polyphen b --hgvs --hgvsg --dir_cache $cache_dir --output_file $input_file.vep.vcf --force_overwrite --symbol --no_intergenic --distance 0";
  
-    $self->param('vep_substr_failure', 1);
+    $self->param('vep_failure', 1);
     my ($exit_code, $stderr, $flat_cmd) = $self->run_system_command($cmd);
     $self->dbc->disconnect_when_inactive(0);
 
+    $self->join_results($failed_file, $input_file);
+	    
     if ($exit_code != 0) {
 	if ($exit_code == 2 or $stderr =~ /outside\sof\sstring\sat.+line 906,\s<\$__ANONIO__>\sline\s\d+\./) {
-	    $self->join_results($failed_file, $input_file);
 	    $self->warning($flat_cmd . ': ' . $stderr);
 	}
 	else {
@@ -36,9 +37,8 @@ sub run {
 	}
     }
     else {
-	$self->join_results($failed_file, $input_file);
-	$self->param('vep_substr_failure', 0);
-	$self->remove_header() unless $failed_file =~ /_1\/chr1_001$/;
+	$self->param('vep_failure', 0);
+	$self->remove_header() unless $chr eq '1' and $failed_file =~ /_001$/;
 	system("rm $failed_file");
     }
    
@@ -47,23 +47,29 @@ sub run {
 sub create_input_file {
     my ($self, $failed_file) = @_;
 
-    my ($last_pos, $last_ref, $last_alt) = $self->last_vep_result_printed();
+    my ($last_pos, $last_id, $last_ref, $last_alt) = $self->last_vep_result_printed();
 
     my $input_file = $failed_file . '_part';
+    for my $file ($input_file, $input_file . 'vep.vcf') {
+	system("rm $file") if -e $file;
+    }
 
     my $cmd;
     if ($last_pos == 0) {
        $cmd = "cp $failed_file $input_file";
     }
     else {
-	open (GREP, 'grep -n $"\t' . $last_pos . '\t" ' . $failed_file . ' |') 
-	    or die "Couldn't grep file $failed_file";
+	my $grep_cmd = 'grep -n $' . "'" . '\t' . $last_pos . '\t' . $last_id .
+	    '\t' . $last_ref . '\t' . $last_alt . '\t' . "' " . $failed_file . ' |';
+	open (GREP, $grep_cmd) 
+	    or die "Couldn't grep file $failed_file for $last_pos, $last_id, $last_ref, $last_alt";
 	my $lines_printed;
 	while (<GREP>) {
 	    ($lines_printed) = $_ =~ /^(\d+):/;
 	}
 	close (GREP);
-
+	
+	
 	my $lines_remaining = $self->required_param('lines_per_input_file') - $lines_printed;
 	$cmd = "tail -n $lines_remaining $failed_file > $input_file";
     }
@@ -98,18 +104,33 @@ sub last_vep_result_printed {
     my $last_pos = 0;
     my $last_ref = 'REF';
     my $last_alt = 'ALT';
+    my $last_id = '';
+    my $last_line = '';
 
     my $vep_file = $self->required_param('vep_input_file') . '.vep.vcf';
-    open(VEP, "tail -n 1 $vep_file |") or die "Couldn't open $vep_file";
+    open(VEP, "<$vep_file") or die "Couldn't open $vep_file";
+    open(TMP, ">$vep_file.tmp");
     while (<VEP>) {
+	last if $_ !~ /\n$/;
+	$last_line = $_;
+	print TMP $_;
+	next if $_ =~ /^#/;
 	my @columns = split("\t", $_);
 	$last_pos = $columns[1];
+	$last_id = $columns[2];
 	$last_ref = $columns[3];
 	$last_alt = $columns[4];
     }
     close(VEP);
+    close(TMP);
 
-    return ($last_pos, $last_ref, $last_alt);
+    my @cmds = ("mv $vep_file.tmp $vep_file");
+    for my $cmd (@cmds) {
+	my ($exit_code, $stderr, $flat_cmd) = $self->run_system_command($cmd);
+	die "$flat_cmd: $exit_code: $stderr" unless $exit_code == 0;
+    }
+
+    return ($last_pos, $last_id, $last_ref, $last_alt);
 }
 
 sub remove_header {
@@ -128,7 +149,7 @@ sub remove_header {
 sub write_output {
     my $self = shift;
 
-    if ($self->param('vep_substr_failure')) {
+    if ($self->param('vep_failure')) {
 	$self->dataflow_output_id([{vep_input_file => $self->param('vep_input_file')}], 2);
     }
 }

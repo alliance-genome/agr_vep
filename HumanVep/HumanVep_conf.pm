@@ -53,9 +53,9 @@ sub default_options {
 	vep_working            => $self->o('pipeline_dir').'/vep_working',
 	out_file               => $self->o('pipeline_dir') . '/Homo_sapiens.vep.vcf',
         
-	standard_max_workers    => 300,
-	highmem_max_workers     => 25,
-	hive_max_workers        => 325,
+	standard_max_workers    => 500,
+	highmem_max_workers     => 100,
+	hive_max_workers        => 600,
     };
 }
 
