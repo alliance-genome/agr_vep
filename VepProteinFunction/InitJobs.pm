@@ -448,7 +448,7 @@ sub parse_gff {
 	    }
 	}
 	elsif ($columns[2] eq 'region') {
-	    $chromosome_map{$columns[0]} = $attributes->{'chromosome'};
+	    $chromosome_map{$columns[0]} = $attributes->{'chromosome'} if exists $attributes->{'chromosome'};
 	}
 	else {
 	    # Other entries can be ignored
