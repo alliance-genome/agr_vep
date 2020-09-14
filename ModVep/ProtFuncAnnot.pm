@@ -4,7 +4,7 @@ ProtFuncAnnot
 
 =head1 SYNOPSIS
 
- mv ProteinFunctionAnnoation.pm ~/.vep/Plugins
+ mv ProtFuncAnnot.pm ~/.vep/Plugins
  ./vep -i variations.vcf --plugin ProtFuncAnnot,mod=MOD,pass=pword
 
 =head1
