@@ -68,8 +68,7 @@ sub write_output {
     my $self = shift;
 
     if ($self->param('vep_failure')) {
-	$self->dataflow_output_id([{failed_input_file => $self->param('vep_input_file'),
-				    vep_failure_no => 1}], 2);
+	$self->dataflow_output_id([{failed_input_file => $self->param('vep_input_file')}], 2);
     }
 }
     

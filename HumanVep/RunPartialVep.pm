@@ -29,12 +29,7 @@ sub run {
     $self->join_results($failed_file, $input_file);
 	    
     if ($exit_code != 0) {
-	if ($exit_code == 2 or $stderr =~ /outside\sof\sstring\sat.+line 906,\s<\$__ANONIO__>\sline\s\d+\./) {
-	    $self->warning($flat_cmd . ': ' . $stderr);
-	}
-	else {
-	    die "$flat_cmd - exit code: $exit_code: $stderr" if $exit_code != 0;
-	}
+	die "$flat_cmd - exit code: $exit_code: $stderr";
     }
     else {
 	$self->param('vep_failure', 0);
@@ -50,7 +45,7 @@ sub create_input_file {
     my ($last_pos, $last_id, $last_ref, $last_alt) = $self->last_vep_result_printed();
 
     my $input_file = $failed_file . '_part';
-    for my $file ($input_file, $input_file . 'vep.vcf') {
+    for my $file ($input_file, $input_file . '.vep.vcf') {
 	system("rm $file") if -e $file;
     }
 

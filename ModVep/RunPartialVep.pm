@@ -28,24 +28,14 @@ sub run {
 
     $self->param('vep_failure', 1);
     my ($exit_code, $stderr, $flat_cmd) = $self->run_system_command($cmd);
-    
     $self->dbc->disconnect_when_inactive(0);
 
+    $self->join_results($failed_file, $input_file);
+
     if ($exit_code != 0) {
-	$self->param('vep_failure_no', $self->required_param('vep_failure_no') + 1);
-	if ($self->param('vep_failure_no') == 3) {
-	    die "Too many failures for $failed_file";
-	}
-	elsif ($exit_code == 2) {
-	    $self->join_results($failed_file, $input_file);
-	    $self->warning($flat_cmd . ': ' . $stderr);
-	}
-	else {
-	    die "$flat_cmd - exit code: $exit_code: $stderr" if $exit_code != 0;
-	}
+	die "$flat_cmd - exit code: $exit_code: $stderr" if $exit_code != 0;
     }
     else {
-	$self->join_results($failed_file, $input_file);
 	$self->param('vep_failure', 0);
 	$self->remove_header() unless $failed_file =~ /_0+1$/;
 	system("rm $failed_file");
@@ -58,32 +48,33 @@ sub create_input_file {
 
     my ($last_pos, $last_ref, $last_alt) = $self->last_vep_result_printed();
 
-    my $last_vep_success = join('|', $last_pos, $last_ref, $last_alt);
-    if (defined $self->param('last_vep_success')) {
-	if ($self->param('last_vep_success') ne $last_vep_success) {
-	    $self->param('vep_failure_no', 1);
-	}
+    my $input_file = $failed_file . '_part';
+    for my $file ($input_file, $input_file . '.vep.vcf') {
+	system("rm $file") if -e $file;
     }
-    $self->param('last_vep_success', $last_vep_success);
 
-    my $input_file = $failed_file . '_' . $last_pos . '_' . $self->param('vep_failure_no');
-    open (INPUT, '>', $input_file) or die "Could not open $input_file for writing";
-    open (FAILED, '<', $failed_file) or die "Could not read $failed_file";
-
-    my $last_line_seen = 0;
-    while (<FAILED>) {
-	chomp;
-	my @columns = split("\t", $_);
-	if ($columns[1] == $last_pos and $columns[3] eq $last_ref and $columns[4] eq $last_alt) {
-	    $last_line_seen = 1;
-	    next;
+    my $cmd;
+    if ($last_pos == 0) {
+	$cmd = "cp $failed_file $input_file";
+    }
+    else {
+	my $grep_cmd = 'grep -n $' . "'" . '\t' . $last_pos . '\t' . $last_id .
+	    '\t' . $last_ref . '\t' . $last_alt . '\t' . "' " . $failed_file . ' |';
+	open (GREP, $grep_cmd) 
+	    or die "Couldn't grep file $failed_file for $last_pos, $last_id, $last_ref, $last_alt";
+	my $lines_printed;
+	while (<GREP>) {
+	    ($lines_printed) = $_ =~ /^(\d+):/;
 	}
-	next unless $last_line_seen;
+	close (GREP);
 	
-	print INPUT "$_\n";
+	
+	my $lines_remaining = $self->required_param('lines_per_input_file') - $lines_printed;
+	$cmd = "tail -n $lines_remaining $failed_file > $input_file";
     }
-    close (INPUT);
-    close (FAILED);
+
+    my ($exit_code, $stderr, $flat_cmd) = $self->run_system_command($cmd);
+    die "Couldn't create input file: $flat_cmd: $exit_code: $stderr" if $exit_code != 0;
 
     return $input_file;
 }
@@ -111,19 +102,35 @@ sub join_results {
 sub last_vep_result_printed {
     my $self = shift;
 
-    my ($last_pos, $last_ref, $last_alt);
+    my $last_pos = 0;
+    my $last_ref = 'REF';
+    my $last_alt = 'ALT';
+    my $last_id = '';
+    my $last_line = '';
 
     my $vep_file = $self->required_param('failed_input_file') . '.vep.vcf';
-    open(VEP, "tail -n 1 $vep_file |") or die "Couldn't open $vep_file";
+    open(VEP, "<$vep_file") or die "Couldn't open $vep_file";
+    open(TMP, ">$vep_file.tmp");
     while (<VEP>) {
+	last if $_ !~ /\n$/;
+	print TMP $_;
+	next if $_ =~ /^#/;
 	my @columns = split("\t", $_);
 	$last_pos = $columns[1];
+	$last_id = $columns[2];
 	$last_ref = $columns[3];
 	$last_alt = $columns[4];
     }
     close(VEP);
+    close(TMP);
 
-    return ($last_pos, $last_ref, $last_alt);
+    my @cmds = ("mv $vep_file.tmp $vep_file");
+    for my $cmd (@cmds) {
+	my ($exit_code, $stderr, $flat_cmd) = $self->run_system_command($cmd);
+	die "$flat_cmd: $exit_code: $stderr" unless $exit_code == 0;
+    }
+
+    return ($last_pos, $last_id, $last_ref, $last_alt);
 }
 
 
@@ -144,9 +151,8 @@ sub remove_header {
 sub write_output {
     my $self = shift;
 
-    if ($self->param('vep_substr_failure') > 0) {
-	$self->dataflow_output_id([{failed_input_file => $self->param('failed_input_file'),
-				    vep_failure_no => $self->param('vep_failure_no')}], 2);
+    if ($self->param('vep_substr_failure')) {
+	$self->dataflow_output_id([{failed_input_file => $self->param('failed_input_file')}], 2);
     }
 }
  
