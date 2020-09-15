@@ -22,7 +22,7 @@ sub run {
 
     # Run VEP
     $self->dbc->disconnect_when_inactive(1);
-    my $cmd = "vep -i $input_file -gff $gff_file -fasta $fasta_file --vcf --hgvs --hgvsg -shift_hgvs=0 --symbol --no_intergenic --distance 0 --output_file $output_file --force_overwrite --plugin $plugin_str";
+    my $cmd = "vep -i $input_file -gff $gff_file -fasta $fasta_file --vcf --hgvs --hgvsg -shift_hgvs=0 --symbol --no_intergenic --distance 0 --output_file $output_file --force_overwrite --plugin $plugin_str --plugin ProtSeq";
     if ($self->param('bam')) {
 	$cmd .= ' --bam ' . $self->param('bam');
     }
