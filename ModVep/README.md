@@ -1,4 +1,4 @@
-B1;95;0c# VEP annotation pipeline for MOD high throughput variations
+# VEP annotation pipeline for MOD high throughput variations
 
 - Runs VEP on MOD high throughput variation VCF files
 - Splits input files, runs VEP in parallel, then combines the output.
@@ -25,7 +25,7 @@ Perl libraries:
 
 ## Installation
 
-- Copy `ProtFuncAnnot.pm` to the VEP Plugins directory (usually `~/.vep/Plugins`).
+- Copy `ProtFuncAnnot.pm` and `ProtFuncSeq.pm` to the VEP Plugins directory (usually `~/.vep/Plugins`).
 
 
 ## Running the pipeline
