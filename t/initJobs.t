@@ -22,6 +22,7 @@ my $mt_id       = 'MGI_C57BL6J_101787_transcript_1';
 my $self = bless {}, 'VepProteinFunction::InitJobs';
 $self->param('agr_fasta', $test_fasta);
 $self->param('agr_gff', $test_gff);
+$self->param('agr_bam',0);
 $self->param('debug_mode', 0);
 $self->param('mod', $mod);
 
