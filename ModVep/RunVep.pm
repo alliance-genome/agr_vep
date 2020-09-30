@@ -17,12 +17,13 @@ sub run {
     my $fasta_file = $self->required_param('fasta');
     my $gff_file = $self->required_param('gff');
 
-    my $plugin_str = 'ProtFuncSeq,mod=' . $self->required_param('mod') . ',pass=' .
+    my $plugin_str = 'ProtFuncAnnot,mod=' . $self->required_param('mod') . ',pass=' .
 	$self->required_param('password');
 
     # Run VEP
     $self->dbc->disconnect_when_inactive(1);
     my $cmd = "vep -i $input_file -gff $gff_file -fasta $fasta_file --vcf --hgvs --hgvsg -shift_hgvs=0 --symbol --no_intergenic --distance 0 --output_file $output_file --force_overwrite --plugin $plugin_str";
+    
     if ($self->param('bam')) {
 	$cmd .= ' --bam ' . $self->param('bam');
     }

@@ -16,12 +16,12 @@ sub run {
     my $fasta_file = $self->required_param('fasta');
     my $gff_file = $self->required_param('gff');
 
-    my $plugin_str = 'ProtFuncSeq,mod=' . $self->required_param('mod') . ',pass=' .
+    my $plugin_str = 'ProtFuncAnnot,mod=' . $self->required_param('mod') . ',pass=' .
 	$self->required_param('password');
 
 
     # Run VEP on new file
-        my $cmd = "vep -i $input_file -gff $gff_file -fasta $fasta_file --vcf --hgvs --hgvsg -shift_hgvs=0 --symbol --no_intergenic --distance 0 --output_file $output_file --force_overwrite --plugin $plugin_str";
+    my $cmd = "vep -i $input_file -gff $gff_file -fasta $fasta_file --vcf --hgvs --hgvsg -shift_hgvs=0 --symbol --no_intergenic --distance 0 --output_file $output_file --force_overwrite --plugin $plugin_str";
     if ($self->param('bam')) {
 	$cmd .= ' --bam ' . $self->param('bam');
     }
@@ -46,7 +46,7 @@ sub run {
 sub create_input_file {
     my ($self, $failed_file) = @_;
 
-    my ($last_pos, $last_ref, $last_alt) = $self->last_vep_result_printed();
+    my ($last_pos, $last_id, $last_ref, $last_alt) = $self->last_vep_result_printed();
 
     my $input_file = $failed_file . '_part';
     for my $file ($input_file, $input_file . '.vep.vcf') {
