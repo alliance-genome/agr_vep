@@ -64,8 +64,10 @@ sub create_input_file {
 	}
 	close (GREP);
 	
-	
-	my $lines_remaining = $self->required_param('lines_per_input_file') - $lines_printed;
+	my $input_lines = `wc -l < $failed_file`;
+	die "Line count for $failed_file failed: $?" if $?;
+	my $lines_remaining = $input_lines - $lines_printed;
+
 	$cmd = "tail -n $lines_remaining $failed_file > $input_file";
     }
     
