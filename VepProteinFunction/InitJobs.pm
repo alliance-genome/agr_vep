@@ -536,7 +536,7 @@ sub update_pfdb_transcript_md5s {
     for my $transcript_id (keys %$transcript_id_md5_map){
 	$update_translation_md5_sth->execute($transcript_id_md5_map->{$transcript_id});
 	$update_transcript_sth->execute(
-	    $transcript_id, $transcript_id_md5_map->{$transcript_id}
+	    $transcript_id, $transcript_id_md5_map->{$transcript_id},
 	    $transcript_id, $transcript_id_md5_map->{$transcript_id}
 	    );
     }
