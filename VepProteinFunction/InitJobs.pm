@@ -519,18 +519,26 @@ sub update_pfdb_transcript_md5s {
              VALUES(?)
     };
     my $update_transcript_query = qq{
-         INSERT IGNORE INTO transcript(transcript_id, translation_md5_id)
+         INSERT INTO transcript(transcript_id, translation_md5_id)
              VALUES(
                  ?,
                  (SELECT translation_md5_id FROM translation_md5
                      WHERE translation_md5 = ?)
          )
+         ON DUPLICATE KEY
+             UPDATE transcript_id = ?, translation_md5_id = (
+                 SELECT translation_md5_id FROM translation_md5
+                     WHERE translation_md5 = ?
+             )
     };
     my $update_translation_md5_sth = $pf_dbh->prepare($update_translation_md5_query);
     my $update_transcript_sth = $pf_dbh->prepare($update_transcript_query);
     for my $transcript_id (keys %$transcript_id_md5_map){
 	$update_translation_md5_sth->execute($transcript_id_md5_map->{$transcript_id});
-	$update_transcript_sth->execute($transcript_id, $transcript_id_md5_map->{$transcript_id});
+	$update_transcript_sth->execute(
+	    $transcript_id, $transcript_id_md5_map->{$transcript_id}
+	    $transcript_id, $transcript_id_md5_map->{$transcript_id}
+	    );
     }
 
     return;
