@@ -125,11 +125,10 @@ sub last_vep_result_printed {
     close(VEP);
     close(TMP);
 
-    my @cmds = ("mv $vep_file.tmp $vep_file");
-    for my $cmd (@cmds) {
-	my ($exit_code, $stderr, $flat_cmd) = $self->run_system_command($cmd);
-	die "$flat_cmd: $exit_code: $stderr" unless $exit_code == 0;
-    }
+    my ($exit_code, $stderr, $flat_cmd) =
+	$self->run_system_command("mv $vep_file.tmp $vep_file");
+    die "$flat_cmd: $exit_code: $stderr" unless $exit_code == 0;
+
 
     return ($last_pos, $last_id, $last_ref, $last_alt);
 }
