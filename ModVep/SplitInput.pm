@@ -18,12 +18,12 @@ sub fetch_input {
     
     my @split_files;
 
-    my $split_file_length = 500000;
+    my $split_file_length = 50000;
 
     my $vcf_file = $self->required_param('vcf');
     my $mod = $self->required_param('mod');
 
-    my $cmd = "grep -v '^#' $vcf_file | split -d -a 5 -l 500000 --numeric-suffixes=1 --verbose - $output_dir/${mod}_ | wc -l 1>&2";
+    my $cmd = "grep -v '^#' $vcf_file | split -d -a 5 -l $split_file_length --numeric-suffixes=1 --verbose - $output_dir/${mod}_ | wc -l 1>&2";
     my ($exit_code, $nr_files, $flat_cmd) = $self->run_system_command($cmd);
     die "Splitting $vcf_file failed: $exit_code: $nr_files" unless $exit_code == 0;
 

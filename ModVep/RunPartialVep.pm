@@ -21,6 +21,7 @@ sub run {
 
 
     # Run VEP on new file
+    $self->dbc->disconnect_when_inactive(1);
     my $cmd = "vep -i $input_file -gff $gff_file -fasta $fasta_file --vcf --hgvs --hgvsg -shift_hgvs=0 --symbol --distance 0 --output_file $output_file --force_overwrite --plugin $plugin_str";
     if ($self->param('bam')) {
 	$cmd .= ' --bam ' . $self->param('bam');
@@ -137,18 +138,23 @@ sub last_vep_result_printed {
 sub remove_header {
     my $self = shift;
 
-    my $file = $self->required_param('vep_input_file') . '.vep.vcf';
-    my @cmds = ("grep -v '^#' $file > $file.tmp", "mv $file.tmp $file");
-    for my $cmd (@cmds) {
-	my ($exit_code, $stderr, $flat_cmd) = $self->run_system_command($cmd);
-	die "Couldn't remove header from $file: $exit_code: $stderr" unless $exit_code == 0;
+    my $file = $self->required_param('failed_input_file') . '.vep.vcf';
+    my $tmp_file = $file . '.tmp';
+    open (IN, '<', $file) or die $!;
+    open (OUT '>', $tmp_file) or die $!;
+    while (<IN>) {
+	print OUT $_ unless $_ =~ /^#/;
     }
+    close (IN);
+    close (OUT);
+    my ($exit_code, $stderr, $flat_cmd) = $self->run_system_command("mv $tmp_file $file");
+    die "Couldn't remove header from $file: $exit_code: $stderr" unless $exit_code == 0;
 
     return;
 }
 
 
-sub write_output {
+sub post_cleanup {
     my $self = shift;
 
     if ($self->param('vep_substr_failure')) {

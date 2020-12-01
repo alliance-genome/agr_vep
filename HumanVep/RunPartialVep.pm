@@ -134,14 +134,20 @@ sub remove_header {
     my $self = shift;
 
     my $file = $self->required_param('vep_input_file') . '.vep.vcf';
-    my @cmds = ("grep -v '^#' $file > $file.tmp", "mv $file.tmp $file");
-    for my $cmd (@cmds) {
-	my ($exit_code, $stderr, $flat_cmd) = $self->run_system_command($cmd);
-	die "Couldn't remove header from $file: $exit_code: $stderr" unless $exit_code == 0;
+    my $tmp_file = $file . '.tmp';
+    open (IN, '<', $file) or die $!;
+    open (OUT '>', $tmp_file) or die $!;
+    while (<IN>) {
+	print OUT $_ unless $_ =~ /^#/;
     }
-
+    close (IN);
+    close (OUT);
+    my ($exit_code, $stderr, $flat_cmd) = $self->run_system_command("mv $tmp_file $file");
+    die "Couldn't remove header from $file: $exit_code: $stderr" unless $exit_code == 0;
+    
     return;
 }
+
 
 sub write_output {
     my $self = shift;

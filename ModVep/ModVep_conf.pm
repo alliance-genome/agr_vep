@@ -27,7 +27,6 @@ sub default_options {
         hive_no_init                   => 0,
         hive_default_max_retry_count   => 0,
         hive_debug_init                => 1,
-        debug_mode                     => 0,
         # the location of your ensembl checkout, the hive looks here for SQL files etc.
 
         pipeline_name           => $self->o('mod') . '_vep',
