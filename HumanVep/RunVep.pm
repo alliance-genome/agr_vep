@@ -50,7 +50,7 @@ sub remove_header {
     my $file = $self->required_param('vep_input_file') . '.vep.vcf';
     my $tmp_file = $file . '.tmp';
     open (IN, '<', $file) or die $!;
-    open (OUT '>', $tmp_file) or die $!;
+    open (OUT, '>', $tmp_file) or die $!;
     while (<IN>) {
 	print OUT $_ unless $_ =~ /^#/;
     }
