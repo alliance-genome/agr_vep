@@ -48,7 +48,7 @@ sub default_options {
             -port   => $self->o('pipeline_port'),
             -user   => $self->o('pipeline_user'),
             -pass   => $self->o('password'),            
-            -dbname => 'mqt_'.$self->o('pipeline_name').'_ehive',
+            -dbname => $self->o('pipeline_name').'_ehive',
             -driver => 'mysql',
         },
 
