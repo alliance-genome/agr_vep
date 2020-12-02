@@ -30,7 +30,7 @@ sub default_options {
         hive_debug_init                => 1,
         debug_mode                     => 0,
 	
-        pipeline_name           => 'vep_protein_function_' . lc($self->o('mod')),
+        pipeline_name           => 'agr_pathogenicity_predictions_' . lc($self->o('mod')),
         pipeline_dir            => $self->o('pipeline_base_dir') . '/' . $self->o('pipeline_name'),  
         
         # directory used for the hive's own output files
@@ -57,7 +57,7 @@ sub default_options {
 	pfdb_port => $self->o('pipeline_port'), 
 	pfdb_user => $self->o('pipeline_user'), 
 	pfdb_pass => $self->o('password'), 
-	pfdb_name => 'mqt_vep_protein_function_' . $self->o('mod'), 
+	pfdb_name => 'agr_pathogenicity_predictions_' . $self->o('mod'), 
 
         # configuration for the various resource options used in the pipeline
         
