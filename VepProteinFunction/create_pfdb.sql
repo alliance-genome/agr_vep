@@ -1,6 +1,6 @@
-CREATE DATABASE mqt_vep_protein_function_WB;
+CREATE DATABASE agr_pathogenicity_predictions_WB;
 
-USE mqt_vep_protein_function_WB;
+USE agr_pathogenicity_predictions_WB;
 
 CREATE TABLE translation_md5 (
        translation_md5_id	SERIAL		PRIMARY KEY,
