@@ -40,7 +40,7 @@ sub default_options {
             -port   => $self->o('pipeline_port'),
             -user   => $self->o('pipeline_user'),
             -pass   => $self->o('password'),            
-            -dbname => 'htp_vep_'.$self->o('pipeline_name').'_ehive',
+            -dbname => 'agr_htp_'.$self->o('pipeline_name').'_ehive',
             -driver => 'mysql',
         },
 
