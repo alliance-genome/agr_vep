@@ -35,10 +35,10 @@ sub new {
     my $param_hash = $self->params_to_hash();
 
     my $mod = $param_hash->{mod};
-    my $db = 'mqt_vep_protein_function_' . $mod;
-    my $host = 'mysql-wormbase-pipelines';
-    my $user = 'wormadmin';
-    my $port = 4331;
+    my $db = 'agr_pathogenicity_predictions_' . $mod;
+    my $host = $ENV{'WORM_DBHOST'};
+    my $user = $ENV{'WORM_DBUSER'};
+    my $port = $ENV{'WORM_DBPORT'};
     $self->{pass} = $param_hash->{'pass'};
 
     my $query = qq{
