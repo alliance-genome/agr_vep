@@ -21,7 +21,7 @@ sub run {
 
     # Run VEP
     $self->dbc->disconnect_when_inactive(1);
-    my $cmd = "vep --cache --offline --$cache -i $input_file --fasta $fasta_file --vcf --sift b --polyphen b --hgvs --hgvsg --dir_cache $cache_dir --output_file $input_file.vep.vcf --force_overwrite --symbol --no_intergenic --distance 0";
+    my $cmd = "vep --cache --offline --$cache -i $input_file --fasta $fasta_file --vcf --sift b --polyphen b --hgvs --hgvsg --dir_cache $cache_dir --output_file $input_file.vep.vcf --force_overwrite --symbol --numbers --distance 0";
     
     $self->param('vep_failure', 1);
     my ($exit_code, $stderr, $flat_cmd) = $self->run_system_command($cmd);
