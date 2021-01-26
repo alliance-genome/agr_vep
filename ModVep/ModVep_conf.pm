@@ -117,6 +117,7 @@ sub pipeline_analyses {
 	    -rc_name        => 'default',
             -flow_into      => {
 	      2 => ['run_partial_vep'],
+	      -1 => ['run_partial_vep'],
             },
         },
 
@@ -138,6 +139,7 @@ sub pipeline_analyses {
 	    -rc_name => 'highmem',
 	    -flow_into => {
 		2 => ['run_partial_vep_more_mem'],
+		-1 => ['run_partial_vep_more_mem'],
 	    },
 	},
 
@@ -159,6 +161,7 @@ sub pipeline_analyses {
 	    -rc_name => 'moremem',
 	    -flow_into => {
 		2 => ['run_partial_vep_more_mem'],
+		-1 => ['run_partial_vep_more_mem'],
 	    },
 	},
 
