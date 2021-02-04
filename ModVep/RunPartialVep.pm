@@ -9,7 +9,7 @@ use base ('Bio::EnsEMBL::Variation::Pipeline::BaseVariationProcess');
 sub run {
     my $self = shift;
 
-    my $failed_file = $self->required_param('failed_input_file');
+    my $failed_file = $self->required_param('vep_input_file');
     my $input_file = $self->create_input_file($failed_file);
     my $output_file = $input_file . '.vep.vcf';
 
@@ -110,7 +110,7 @@ sub last_vep_result_printed {
     my $last_id = '';
     my $last_line = '';
 
-    my $vep_file = $self->required_param('failed_input_file') . '.vep.vcf';
+    my $vep_file = $self->required_param('vep_input_file') . '.vep.vcf';
     open(VEP, "<$vep_file") or die "Couldn't open $vep_file";
     open(TMP, ">$vep_file.tmp");
     while (<VEP>) {
@@ -138,7 +138,7 @@ sub last_vep_result_printed {
 sub remove_header {
     my $self = shift;
 
-    my $file = $self->required_param('failed_input_file') . '.vep.vcf';
+    my $file = $self->required_param('vep_input_file') . '.vep.vcf';
     my $tmp_file = $file . '.tmp';
     open (IN, '<', $file) or die $!;
     open (OUT, '>', $tmp_file) or die $!;
@@ -158,7 +158,7 @@ sub post_cleanup {
     my $self = shift;
 
     if ($self->param('vep_substr_failure')) {
-	$self->dataflow_output_id([{failed_input_file => $self->param('failed_input_file')}], 2);
+	$self->dataflow_output_id([{vep_input_file => $self->param('vep_input_file')}], 2);
     }
 }
  
