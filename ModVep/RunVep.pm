@@ -17,7 +17,7 @@ sub run {
     my $fasta_file = $self->required_param('fasta');
     my $gff_file = $self->required_param('gff');
 
-    my $plugin_str = 'ProtFuncAnnot,mod=' . $self->required_param('mod') . ',pass=' .
+    my $plugin_str = 'ProtFuncAnnotHTP,mod=' . $self->required_param('mod') . ',pass=' .
 	$self->required_param('password');
 
     # Run VEP
