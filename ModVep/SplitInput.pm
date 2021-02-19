@@ -10,11 +10,10 @@ sub fetch_input {
     my $self = shift;
     
     my $output_dir = $self->required_param('vep_working');
-    unless (-d $output_dir) {
-	my $err;
-	make_path($output_dir, {error => \$err});
-	die "make_path failed: ".Dumper($err) if $err && @$err;
-    }
+    system("rm -r $output_dir") if -d $output_dir;
+    my $err;
+    make_path($output_dir, {error => \$err});
+    die "make_path failed: ".Dumper($err) if $err && @$err;
     
     my @split_files;
 
