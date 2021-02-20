@@ -22,7 +22,7 @@ sub run {
 
     # Run VEP on new file
     $self->dbc->disconnect_when_inactive(1);
-    my $cmd = "vep -i $input_file -gff $gff_file -fasta $fasta_file --vcf --hgvs --hgvsg -shift_hgvs=0 --symbol --numbers --distance 0 --output_file $output_file --force_overwrite --plugin $plugin_str --plugin GenomePos";
+    my $cmd = "vep -i $input_file -gff $gff_file --format vcf -fasta $fasta_file --vcf --hgvs --hgvsg -shift_hgvs=0 --symbol --numbers --distance 0 --output_file $output_file --force_overwrite --plugin $plugin_str --plugin GenomePos";
     if ($self->param('bam')) {
 	$cmd .= ' --bam ' . $self->param('bam');
     }
@@ -110,24 +110,33 @@ sub last_vep_result_printed {
     my $last_id = '';
     my $last_line = '';
 
-    my $vep_file = $self->required_param('vep_input_file') . '.vep.vcf';
-    open(VEP, "<$vep_file") or die "Couldn't open $vep_file";
-    open(TMP, ">$vep_file.tmp");
-    while (<VEP>) {
-	last if $_ !~ /\n$/;
-	print TMP $_;
-	next if $_ =~ /^#/;
-	my @columns = split("\t", $_);
-	$last_pos = $columns[1];
-	$last_id = $columns[2];
-	$last_ref = $columns[3];
-	$last_alt = $columns[4];
-    }
-    close(VEP);
-    close(TMP);
+    my ($exit_code, $stderr, $flat_cmd);
 
-    my ($exit_code, $stderr, $flat_cmd) =
-	$self->run_system_command("mv $vep_file.tmp $vep_file");
+    my $vep_file = $self->required_param('vep_input_file') . '.vep.vcf';
+    
+    if (-e $vep_file) {
+	open(VEP, "<$vep_file") or die "Couldn't open $vep_file";
+	open(TMP, ">$vep_file.tmp");
+	while (<VEP>) {
+	    last if $_ !~ /\n$/;
+	    print TMP $_;
+	    next if $_ =~ /^#/;
+	    my @columns = split("\t", $_);
+	    $last_pos = $columns[1];
+	    $last_id = $columns[2];
+	    $last_ref = $columns[3];
+	    $last_alt = $columns[4];
+	}
+	close(VEP);
+	close(TMP);
+	
+	($exit_code, $stderr, $flat_cmd) =
+	    $self->run_system_command("mv $vep_file.tmp $vep_file");
+    }
+    else {
+	($exit_code, $stderr, $flat_cmd) =
+	    $self->run_system_command("touch $vep_file");
+    }
     die "$flat_cmd: $exit_code: $stderr" unless $exit_code == 0;
 
 
