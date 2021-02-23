@@ -4,7 +4,7 @@ ProtFuncAnnot
 
 =head1 SYNOPSIS
 
- mv ProtFuncAnnot.pm ~/.vep/Plugins
+ cp ProtFuncAnnot.pm ~/.vep/Plugins/
  ./vep -i variations.vcf --plugin ProtFuncAnnot,mod=MOD,pass=pword
 
 =head1

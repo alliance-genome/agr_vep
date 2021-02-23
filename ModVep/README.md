@@ -25,7 +25,7 @@ Perl libraries:
 
 ## Installation
 
-- Copy `GenomePos.pm`, `ProtFuncAnnot.pm`, `ProtFuncAnnotHTP.pm`, and `ProtFuncSeq.pm` to the VEP Plugins directory (usually `~/.vep/Plugins`).
+- Copy `GenomePos.pm`, `TranscriptName.pm`, `ProtFuncAnnot.pm`, `ProtFuncAnnotHTP.pm`, and `ProtFuncSeq.pm` to the VEP Plugins directory (usually `~/.vep/Plugins`).
 
 
 ## Running the pipeline
