@@ -116,7 +116,8 @@ sub pipeline_analyses {
 	    -hive_capacity => $self->o('hive_max_workers'),
 	    -rc_name        => 'default',
             -flow_into      => {
-	      2 => ['run_partial_vep'],
+	      3 => ['run_partial_vep'],
+	      2 => ['process_output'],
 	      -1 => ['run_partial_vep'],
             },
         },
@@ -138,7 +139,8 @@ sub pipeline_analyses {
 	    -hive_capacity => $self->o('hive_max_workers'),
 	    -rc_name => 'highmem',
 	    -flow_into => {
-		2 => ['run_partial_vep_more_mem'],
+		3 => ['run_partial_vep_more_mem'],
+		2 => ['process_output'],
 		-1 => ['run_partial_vep_more_mem'],
 	    },
 	},
@@ -160,9 +162,20 @@ sub pipeline_analyses {
 	    -hive_capacity => $self->o('hive_max_workers'),
 	    -rc_name => 'moremem',
 	    -flow_into => {
-		2 => ['run_partial_vep_more_mem'],
+		3 => ['run_partial_vep_more_mem'],
+		2 => ['process_output'],
 		-1 => ['run_partial_vep_more_mem'],
 	    },
+	},
+
+	{   -logic_name      => 'process_output',
+            -module          => 'ModVep::ProcessOutput',
+            -parameters      => {
+		@common_params,
+	    },
+	    -input_ids       => [],
+	    -rc_name         => 'default',
+	    -max_retry_count => 1,
 	},
 
 	{   -logic_name     => 'combine_output',

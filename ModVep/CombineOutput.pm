@@ -14,8 +14,6 @@ sub run {
     my $working_dir = $self->required_param('vep_working');
     my $out_file = $self->required_param('out_file');
 
-    my $header_printed = 0;
-    
     my @files = <$working_dir/*>;
     for my $file (@files) {
 	next unless $file =~ /\.vep\.vcf$/;

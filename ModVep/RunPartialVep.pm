@@ -3,6 +3,8 @@ package ModVep::RunPartialVep;
 use strict;
 use warnings;
 
+use Path::Class;
+
 use base ('Bio::EnsEMBL::Variation::Pipeline::BaseVariationProcess');
 
 
@@ -22,7 +24,7 @@ sub run {
 
     # Run VEP on new file
     $self->dbc->disconnect_when_inactive(1);
-    my $cmd = "vep -i $input_file -gff $gff_file --format vcf -fasta $fasta_file --vcf --hgvs --hgvsg -shift_hgvs=0 --symbol --numbers --distance 0 --output_file $output_file --force_overwrite --plugin $plugin_str --plugin GenomePos --plugin TranscriptName,gff=$gff_file --check_ref" ;
+    my $cmd = "vep -i $input_file -gff $gff_file --format vcf -fasta $fasta_file --vcf --hgvs --hgvsg -shift_hgvs=0 --symbol --numbers --distance 0 --output_file $output_file --force_overwrite --plugin $plugin_str --plugin GenomePos --plugin TranscriptName,gff=$gff_file --check_ref --flag_pick_allele_gene" ;
     if ($self->param('bam')) {
 	$cmd .= ' --bam ' . $self->param('bam');
     }
@@ -38,8 +40,7 @@ sub run {
     }
     else {
 	$self->param('vep_failure', 0);
-	$self->remove_header() unless $failed_file =~ /_0+1$/;
-	system("rm $failed_file");
+	unlink $failed_file;
     }
 }
 
@@ -87,16 +88,19 @@ sub join_results {
 
     my $failed_results_file = $failed_file . '.vep.vcf';
     my $input_results_file = $input_file . '.vep.vcf';
-
-    system("grep -v '^#' $input_results_file > $input_results_file.copy");
-		
-    my $cmd = "cat $input_results_file.copy >> $failed_results_file";
-    my ($exit_code, $stderr, $flat_cmd) = $self->run_system_command($cmd);
-    die "Couldn't concatenate $failed_results_file and $input_results_file: $flat_cmd - $stderr"
-	unless $exit_code == 0;
-		
-    system("rm $input_file*");
     
+    my @cmds = ("touch $failed_results_file",
+	        "grep '^#' $input_results_file > $input_results_file.header",
+		"grep -v '^#' $failed_results_file > $failed_results_file.body",
+		"grep -v '^#' $input_results_file > $input_results_file.body",
+		"cat $input_results_file.header $failed_results_file.body $input_results_file.body > $failed_results_file",
+		"rm $input_file* $failed_results_file.*");
+
+    for my $cmd (@cmds) {
+	my ($exit_code, $stderr, $flat_cmd) = $self->run_system_command($cmd);
+	die "ERROR: $exit_code: $flat_cmd - $stderr" unless $exit_code == 0 or ($exit_code == 1 and $cmd =~ /^grep/);
+    }
+
     return;
 }
 
@@ -115,20 +119,18 @@ sub last_vep_result_printed {
     my $vep_file = $self->required_param('vep_input_file') . '.vep.vcf';
     
     if (-e $vep_file) {
-	open(VEP, "<$vep_file") or die "Couldn't open $vep_file";
-	open(TMP, ">$vep_file.tmp");
-	while (<VEP>) {
-	    last if $_ !~ /\n$/;
-	    print TMP $_;
-	    next if $_ =~ /^#/;
-	    my @columns = split("\t", $_);
+	my $vep_fh = file($vep_file)->openr;
+	my $tmp_fh = file($vep_file . '.tmp')->openw;
+	while (my $line = $vep_fh->getline) {
+	    last if $line !~ /\n$/;
+	    $tmp_fh->print($line);
+	    next if $line =~ /^#/;
+	    my @columns = split("\t", $line);
 	    $last_pos = $columns[1];
 	    $last_id = $columns[2];
 	    $last_ref = $columns[3];
 	    $last_alt = $columns[4];
 	}
-	close(VEP);
-	close(TMP);
 	
 	($exit_code, $stderr, $flat_cmd) =
 	    $self->run_system_command("mv $vep_file.tmp $vep_file");
@@ -144,31 +146,11 @@ sub last_vep_result_printed {
 }
 
 
-sub remove_header {
-    my $self = shift;
-
-    my $file = $self->required_param('vep_input_file') . '.vep.vcf';
-    my $tmp_file = $file . '.tmp';
-    open (IN, '<', $file) or die $!;
-    open (OUT, '>', $tmp_file) or die $!;
-    while (<IN>) {
-	print OUT $_ unless $_ =~ /^#/;
-    }
-    close (IN);
-    close (OUT);
-    my ($exit_code, $stderr, $flat_cmd) = $self->run_system_command("mv $tmp_file $file");
-    die "Couldn't remove header from $file: $exit_code: $stderr" unless $exit_code == 0;
-
-    return;
-}
-
-
 sub post_cleanup {
     my $self = shift;
 
-    if ($self->param('vep_substr_failure')) {
-	$self->dataflow_output_id([{vep_input_file => $self->param('vep_input_file')}], 2);
-    }
+    my $branch_nr = $self->param('vep_failure') ? 3 : 2; 
+    $self->dataflow_output_id([{vep_input_file => $self->param('vep_input_file')}], $branch_nr);
 }
  
 
