@@ -98,7 +98,7 @@ sub join_results {
 
     for my $cmd (@cmds) {
 	my ($exit_code, $stderr, $flat_cmd) = $self->run_system_command($cmd);
-	die "ERROR: $exit_code: $flat_cmd - $stderr" unless $exit_code == 0 or ($exit_code == 1 and $cmd =~ /^grep/);
+	die "ERROR: $exit_code: $flat_cmd - $stderr" unless $exit_code == 0 or ($exit_code == 256 and $cmd =~ /^grep/);
     }
 
     return;
