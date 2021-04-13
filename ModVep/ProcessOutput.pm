@@ -33,7 +33,8 @@ sub run {
 	    $out_fh->print("$line\n") if $input_file =~ /_0+1$/;
 	    next;
 	}
-	my ($pre_csq, $csq_string, $post_csq) = $line =~ /^(.+CSQ=)([^;]+)(.*)$/;
+	my @columns = split("\t", $line);
+	my ($pre_csq, $csq_string, $post_csq) = $columns[7] =~ /^(.+CSQ=)([^;]+)(.*)$/;
 	die "Could not parse line for CSQ:\n$line\n" unless defined $pre_csq and defined $csq_string and defined $post_csq;
 	my @csq_entries = split(',', $csq_string);
 	my %most_severe_consequences;
@@ -53,7 +54,8 @@ sub run {
 	    $csq_entry_split->[$pick_flag_ix] = $most_severe_consequences{$csq_entry_split->[$allele_ix]};
 	    push @new_csq_entries, join('|', @$csq_entry_split);
 	}
-	$out_fh->print($pre_csq . join(',', @new_csq_entries) . $post_csq . "\n");
+	$columns[7] = $pre_csq . join(',', @new_csq_entries) . $post_csq;
+	$out_fh->print(join("\t", @columns) . "\n");
     }
 
     move($output_file, $input_file) or die "Overwriting $input_file with $output_file failed";;
