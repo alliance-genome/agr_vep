@@ -30,11 +30,11 @@ sub run {
 	        ($consequence_ix) = grep {$csq_cols[$_] eq 'Consequence'} (0 .. $nr_csq_cols - 1);
 		$line =~ s/\|PICK\|/\|Gene_level_consequence\|/;
 	    }
-	    $out_fh->print("$line\n") if $input_file =~ /_0+1$/;
+	    $out_fh->print("$line\n") if $input_file =~ /_0+1\.vep\.vcf$/;
 	    next;
 	}
 	my @columns = split("\t", $line);
-	my ($pre_csq, $csq_string, $post_csq) = $columns[7] =~ /^(.+CSQ=)([^;]+)(.*)$/;
+	my ($pre_csq, $csq_string, $post_csq) = $columns[7] =~ /^(.*CSQ=)([^;]+)(.*)$/;
 	die "Could not parse line for CSQ:\n$line\n" unless defined $pre_csq and defined $csq_string and defined $post_csq;
 	my @csq_entries = split(',', $csq_string);
 	my %most_severe_consequences;
