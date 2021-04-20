@@ -42,11 +42,11 @@ Perl libraries:
 
 ### SIFT installation
 
-Follow the instructions in the INSTALL file.  No special setup is required.
+Follow the instructions in the INSTALL file found in the SIFT install folder.  No special setup is required.
 
 ### PolyPhen installation
 
-- Follow the instructions in the INSTALL and README files for setting up PolyPhen2 with non-human species, with the below caveats.
+- Follow the instructions in the INSTALL and README files found in the PolyPhen install folder for setting up PolyPhen2 with non-human species, with the below caveats.
 - Use `update_polyphen_uniprot.pl` from this repository in place of `$PPH/update/uniprot.pl` as the UniProt download format has changed. 
 - Add the following to the `%SPECIES` hash in `$PPH/update/unipfam.pl':
     roundworm' => {
