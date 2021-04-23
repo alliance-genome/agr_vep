@@ -116,7 +116,7 @@ sub pipeline_analyses {
 	    -hive_capacity => $self->o('hive_max_workers'),
 	    -rc_name        => 'default',
             -flow_into      => {
-	      3 => ['run_partial_vep'],
+	      '3->A' => ['run_partial_vep'],
 	      2 => ['process_output'],
 	      -1 => ['run_partial_vep'],
             },
