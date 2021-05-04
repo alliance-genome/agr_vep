@@ -18,7 +18,8 @@ sub fetch_input {
     
     my @split_files;
 
-    my $split_file_length = 50000;
+    my $split_file_length = $self->required_param('lines_per_file');
+    
 
     my $vcf_file = $self->required_param('vcf');
     my $mod = $self->required_param('mod');
@@ -28,13 +29,22 @@ sub fetch_input {
     die "Splitting $vcf_file failed: $exit_code: $nr_files" unless $exit_code == 0;
 
     chomp $nr_files;
+    my $folder_nr = 0;
     for my $n (1 .. $nr_files) {
+	if ($n % $self->required_param('files_per_folder') == 1) {
+	    $folder_nr++;
+	    make_path("${output_dir}/${folder_nr}", {error => \$err});
+	    die "make_path failed: ".Dumper($err) if $err && @$err;
+	}
 	while (length $n < 5) {
 	    $n = '0' . $n;
 	}
 	    
-	my $file = $output_dir .'/' . $self->required_param('mod') . '_' . $n;
-	push @split_files, $file;
+	my $file_location = "${output_dir}/" . $self->required_param('mod') . "_$n";
+	my $file_destination = "${output_dir}/${folder_nr}/" . $self->required_param('mod') . "_$n";
+
+	$self->run_system_command("mv ${file_location} ${file_destination}");
+	push @split_files, $file_destination;
     }
     
     $self->param('vep_output_ids', [map {{vep_input_file => $_}} @split_files]);

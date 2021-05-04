@@ -52,6 +52,9 @@ sub default_options {
 	vep_working            => $self->o('pipeline_dir') . '/' . $self->o('mod') . '_working',
 	out_file               => $self->o('pipeline_dir') . '/' . $self->o('mod') . '.vep.vcf',
         
+	lines_per_file => 25000,
+	files_per_folder => 200,
+
 	standard_max_workers    => 300,
 	highmem_max_workers     => 25,
 	hive_max_workers        => 325,
@@ -87,7 +90,9 @@ sub pipeline_analyses {
 	{   -logic_name => 'split_input',
 	    -module     => 'ModVep::SplitInput',
 	    -parameters => {
-		debug_mode     => $self->o('debug_mode'),
+		debug_mode       => $self->o('debug_mode'),
+		lines_per_file   => $self->o('lines_per_file'),
+		files_per_folder => $self->o('files_per_folder'),
 		@common_params,
 	    },
 	    -input_ids => [{}],
@@ -116,7 +121,7 @@ sub pipeline_analyses {
 	    -hive_capacity => $self->o('hive_max_workers'),
 	    -rc_name        => 'default',
             -flow_into      => {
-	      '3->A' => ['run_partial_vep'],
+	      3 => ['run_partial_vep'],
 	      2 => ['process_output'],
 	      -1 => ['run_partial_vep'],
             },

@@ -14,12 +14,17 @@ sub run {
     my $working_dir = $self->required_param('vep_working');
     my $out_file = $self->required_param('out_file');
 
-    my @files = <$working_dir/*>;
-    for my $file (@files) {
-	next unless $file =~ /\.vep\.vcf$/;
-	my $cmd = "cat $file >> $out_file";
-	my ($exit_code, $std_err, $flat_cmd) = $self->run_system_command($cmd);
-	die "Rejoining VEP output failed [$exit_code]: $std_err" unless $exit_code == 0;    
+    my $folder_nr = 1;
+
+    while (-d "${working_dir}/${folder_nr}") {
+	my @files = <$working_dir/$folder_nr/*>;
+	for my $file (@files) {
+	    next unless $file =~ /\.vep\.vcf$/;
+	    my $cmd = "cat $file >> $out_file";
+	    my ($exit_code, $std_err, $flat_cmd) = $self->run_system_command($cmd);
+	    die "Rejoining VEP output failed [$exit_code]: $std_err" unless $exit_code == 0;    
+	}
+	$folder_nr++;
     }
 
     my $err;
