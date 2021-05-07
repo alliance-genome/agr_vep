@@ -43,7 +43,7 @@ sub run {
     }
 
     $self->run_weka($translation_md5, $input_file, 'humdiv', $output_dir, $tmp_dir);
-    $self->run_weka($translation_md5, $input_file, 'humvar', $output_dir, $tmp_dir) if $self->required_param('mod') eq 'human';
+    $self->run_weka($translation_md5, $input_file, 'humvar', $output_dir, $tmp_dir) if lc($self->required_param('mod')) eq 'human';
 }
 
 
