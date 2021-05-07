@@ -4,7 +4,7 @@ ProtFuncAnnotHTP
 
 =head1 SYNOPSIS
 
- mv ProtFuncAnnotHTP.pm ~/.vep/Plugins
+ cp ProtFuncAnnotHTP.pm ~/.vep/Plugins/
  ./vep -i variations.vcf --plugin ProtFuncAnnotHTP,mod=MOD,pass=pword
 
 =head1
@@ -128,7 +128,10 @@ sub run {
 
 	$data = {};
 	while(my $arrayref = $self->{get_sth}->fetchrow_arrayref) {
-	    my $analysis = $arrayref->[1] eq 'pph' ? 'polyphen' : $arrayref->[1];
+	    my $analysis = $arrayref->[1];
+	    # we may want to change the logic here if we want to use humvar for human variants
+	    next if $analysis eq 'pph_humvar'; 
+	    $analysis = $analysis eq 'pph' ? 'polyphen' : 'sift';
 	    my $sub_analysis;
 	    $sub_analysis = 'humdiv' if $analysis eq 'polyphen';
 	    $data->{$analysis} = Bio::EnsEMBL::Variation::ProteinFunctionPredictionMatrix->new(

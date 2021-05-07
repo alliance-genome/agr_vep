@@ -5,7 +5,7 @@ TranscriptName
 =head1 SYNOPSIS
 
  cp TranscriptName.pm ~/.vep/Plugins/
- ./vep -i variations.vcf --plugin TranscriptName,gff=gff_file.gff
+ ./vep -i variations.vcf --plugin TranscriptName,name=db_name,host=db_host,user=db_user,port=db_port,pass=db_pass
 
 =head1
 
@@ -20,14 +20,24 @@ use warnings;
 
 use base qw(Bio::EnsEMBL::Variation::Utils::BaseVepPlugin);
 
-
 sub new {
     my $class = shift;
 
     my $self = $class->SUPER::new(@_);
     my $param_hash = $self->params_to_hash();
 
-    $self->{gff} = $param_hash->{gff};
+    $self->{db_name} = $param_hash->{name};
+    $self->{db_host} = $param_hash->{host};
+    $self->{db_user} = $param_hash->{user};
+    $self->{db_port} = $param_hash->{port};
+    $self->{db_pass} = $param_hash->{pass};
+
+    $self->{query} = "SELECT transcript_name FROM transcript_map WHERE transcript_id = ?";
+    
+    $self->{dsn} = 'dbi:mysql:database=' . $self->{db_name} . ';host=' . $self->{db_host} . ';port=' . $self->{db_port};
+    $self->{dbh} ||= DBI->connect($self->{dsn}, $self->{db_user}, $self->{db_pass}) or die $DBI::errstr;
+    $self->{get_sth} = $self->{dbh}->prepare($self->{query});
+
     $self->{initial_pid} = $$;
 
     return $self;
@@ -61,13 +71,23 @@ sub run {
     my $transcript_name = $self->fetch_from_cache($tr->stable_id);
 
     if (!$transcript_name) {
-	my $id_name_map = $self->map_transcript_name_to_id();
-	$self->add_to_cache($id_name_map);
-	$transcript_name = $id_name_map->{$tr->stable_id};
+	if ($$ != $self->{initial_pid}) { #forked, reconnect to DB
+	    $self->{dbh} = DBI->connect($self->{dsn}, $self->{db_user}, $self->{db_pass});
+	    $self->{get_sth} = $self->{dbh}->prepare($self->{query});
+
+	    #set this so only do once per fork
+	    $self->{initial_pid} = $$;
+	}
+
+	$self->{get_sth}->execute($tr->stable_id);
+
+	while (my $arrayref = $self->{get_sth}->fetchrow_arrayref) {
+	    $transcript_name = $arrayref->[0];
+	}
+	$self->add_to_cache($tr->stable_id, $transcript_name);
     }
 
-    my $results = {};
-    $results->{transcript_name} = $transcript_name;
+    my $results = {transcript_name => $transcript_name};
 
     return $results;
 }
@@ -76,51 +96,24 @@ sub run {
 sub fetch_from_cache {
     my ($self, $transcript_id) = @_;
 
-    return unless $self->{_transcript_id_name_map_cache};
+    my $cache = $self->{_transcript_id_name_map_cache} ||= [];
 
-    return $self->{_transcript_id_name_map_cache}{$transcript_id};
+    my ($data) = map {$_->{name}} grep {$_->{id} eq $transcript_id} @$cache;
+
+    return $data;
 }
 
 
 sub add_to_cache {
-    my ($self, $id_name_map) = @_;
+    my ($self, $transcript_id, $transcript_name) = @_;
 
-    $self->{_transcript_id_name_map_cache} = $id_name_map;
+    my $cache = $self->{_transcript_id_name_map_cache} ||= [];
+    push @$cache, {id => $transcript_id, name => $transcript_name};
+
+    shift @$cache while scalar @$cache > 50;
 
     return;
 }
 
-
-sub map_transcript_name_to_id {
-    my $self = shift;
-
-    my %map;
-    my $gff_file = $self->{gff}
-    open (GFF, '<', "gunzip -c $gff_file|");
-    while (<GFF>) {
-	next if $_ =~ /^#/;
-	my @columns = split("\t", $_);
-	my $attributes = get_attributes($columns[8]);
-	my $transcript_id = $attributes->{transcript_id};
-	next unless $transcript_id;
-	my $transcript_name = $attributes->{Name} || $attributes->{name} || $transcript_id;
-	$transcript_name =~ s/\s+$//;
-	$map{$transcript_id} = $transcript_name;
-    }
-
-    return \%map;
-}
-
-sub get_attributes {
-    my $info = shift;
-    
-    my %attributes;
-    for my $attr (split(';', $info)) {
-	my ($key, $value) = split('=',$attr);
-	$attributes{$key} = $value;
-    }
-    
-    return \%attributes;
-}
 
 1;

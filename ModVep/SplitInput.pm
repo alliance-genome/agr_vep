@@ -15,12 +15,14 @@ sub fetch_input {
     my $err;
     make_path($output_dir, {error => \$err});
     die "make_path failed: ".Dumper($err) if $err && @$err;
+
+
+    # Store transcript ID to name map for later use by TranscriptName VEP plugin
+    $self->store_transcript_id_map();
     
     my @split_files;
-
     my $split_file_length = $self->required_param('lines_per_file');
     
-
     my $vcf_file = $self->required_param('vcf');
     my $mod = $self->required_param('mod');
 
@@ -48,6 +50,45 @@ sub fetch_input {
     }
     
     $self->param('vep_output_ids', [map {{vep_input_file => $_}} @split_files]);
+
+}
+
+
+sub store_transcript_id_map {
+    my $self = shift;
+
+    my $hive_dbh = $self->dbc->db_handle;
+    my @create_sql = (
+	"DROP TABLE IF EXISTS transcript_map;",
+	"CREATE TABLE transcript_map (transcript_id varchar(50), transcript_name varchar(50));"
+	);
+    foreach my $create_sql (@create_sql) {
+	$hive_dbh->do($create_sql) or $self->throw("Failed to execute: $create_sql");
+    }
+  
+    my $insert_sql = "INSERT INTO transcript_map VALUES(?, ?)";
+    my $hive_sth = $hive_dbh->prepare($insert_sql);
+
+    my %map;
+    my $gff_file = $self->required_param('gff');
+    open (GFF, "gunzip -c $gff_file|");
+    while (<GFF>) {
+	next if $_ =~ /^#/;
+	my @columns = split("\t", $_);
+	next if $columns[2] eq 'exon';
+	my %attributes = split(/[=;]/, $columns[8]);
+	my $transcript_id = $attributes{'transcript_id'};
+	next unless $transcript_id;
+	$transcript_id =~ s/\s+$//;
+	my $transcript_name = $attributes{'Name'} || $attributes{'name'} || $transcript_id;
+	$transcript_name =~ s/\s+$//;
+	$hive_sth->execute($transcript_id, $transcript_name);
+    }
+    close (GFF);
+
+    $hive_dbh->do("CREATE INDEX transcript_idx ON transcript_map (transcript_id)");
+
+    return;
 }
 
 
@@ -57,5 +98,6 @@ sub write_output {
     $self->dataflow_output_id($self->param('vep_output_ids'), 2);
 
 }
+
 
 1;

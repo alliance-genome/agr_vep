@@ -13,13 +13,18 @@ sub run {
     
     my $fasta_file = $self->required_param('fasta');
     my $gff_file = $self->required_param('gff');
+    my $map_file = $self->required_param('vep_working') . '/transcript_id_name_map.dmp';
 
     my $plugin_str = 'ProtFuncAnnotHTP,mod=' . $self->required_param('mod') . ',pass=' .
 	$self->required_param('password');
 
+    my $tn_plugin_str = 'TranscriptName,name=' . lc($self->required_param('pipeline_db_name')) . ',host=' . $self->required_param('pipeline_host') .
+	',user=' . $self->required_param('pipeline_user') . ',port=' . $self->required_param('pipeline_port') . ',pass=' . $self->required_param('password');
+
+
     # Run VEP
     $self->dbc->disconnect_when_inactive(1);
-    my $cmd = "vep -i $input_file -gff $gff_file --format vcf -fasta $fasta_file --vcf --hgvs --hgvsg -shift_hgvs=0 --symbol --numbers --distance 0 --output_file $output_file --force_overwrite --plugin $plugin_str --plugin GenomePos --plugin TranscriptName,gff=$gff_file --check_ref --flag_pick_allele_gene";
+    my $cmd = "vep -i $input_file -gff $gff_file --format vcf -fasta $fasta_file --vcf --hgvs --hgvsg -shift_hgvs=0 --symbol --numbers --distance 0 --output_file $output_file --force_overwrite --plugin $plugin_str --plugin GenomePos --plugin $tn_plugin_str --check_ref --flag_pick_allele_gene --safe";
     
     if ($self->param('bam')) {
 	$cmd .= ' --bam ' . $self->param('bam');
@@ -35,7 +40,7 @@ sub run {
     }
     else {
 	$self->param('vep_failure', 0);
-	system("rm $input_file");
+	unlink $input_file unless $self->required_param('debug');
     }
     system("rm ${output_file}_summary.html");
 }

@@ -34,13 +34,13 @@ sub default_options {
         
         
         # connection details for the hive's own database
-
+	pipeline_db_name => 'agr_htp_' . $self->o('pipeline_name') . '_ehive', 
         pipeline_db => { ## to change
             -host   => $self->o('pipeline_host'), 
             -port   => $self->o('pipeline_port'),
             -user   => $self->o('pipeline_user'),
             -pass   => $self->o('password'),            
-            -dbname => 'agr_htp_'.$self->o('pipeline_name').'_ehive',
+            -dbname => $self->o('pipeline_db_name'),
             -driver => 'mysql',
         },
 
@@ -55,9 +55,11 @@ sub default_options {
 	lines_per_file => 25000,
 	files_per_folder => 200,
 
-	standard_max_workers    => 300,
+	standard_max_workers    => 200,
 	highmem_max_workers     => 25,
-	hive_max_workers        => 325,
+	hive_max_workers        => 225,
+
+	debug => 1
     };
 }
 
@@ -84,6 +86,7 @@ sub pipeline_analyses {
 	vep_working         => $self->o('vep_working'),
 	mod                 => $self->o('mod'),
 	vcf                 => $self->o('vcf'),
+	debug               => $self->o('debug')
     );
 
     return [
@@ -93,6 +96,7 @@ sub pipeline_analyses {
 		debug_mode       => $self->o('debug_mode'),
 		lines_per_file   => $self->o('lines_per_file'),
 		files_per_folder => $self->o('files_per_folder'),
+		gff              => $self->o('gff'),
 		@common_params,
 	    },
 	    -input_ids => [{}],
@@ -107,11 +111,15 @@ sub pipeline_analyses {
         {   -logic_name     => 'run_vep',
             -module         => 'ModVep::RunVep',
             -parameters     => {
-		vep_dir         => $self->o('vep_dir'),
-		password        => $self->o('password'),
-		gff             => $self->o('gff'),
-		fasta           => $self->o('fasta'),
-		bam             => $self->o('bam'),
+		vep_dir          => $self->o('vep_dir'),
+		password         => $self->o('password'),
+		gff              => $self->o('gff'),
+		fasta            => $self->o('fasta'),
+		bam              => $self->o('bam'),
+		pipeline_db_name => $self->o('pipeline_db_name'),
+		pipeline_host    => $self->o('pipeline_host'),
+		pipeline_user    => $self->o('pipeline_user'),
+		pipeline_port    => $self->o('pipeline_port'),
                 @common_params,
             },
             -failed_job_tolerance => 5,
@@ -130,11 +138,15 @@ sub pipeline_analyses {
 	{   -logic_name     => 'run_partial_vep',
 	    -module         => 'ModVep::RunPartialVep',
 	    -parameters     => {
-		vep_dir         => $self->o('vep_dir'),
-		password        => $self->o('password'),
-		gff             => $self->o('gff'),
-		fasta           => $self->o('fasta'),
-		bam             => $self->o('bam'),
+		vep_dir          => $self->o('vep_dir'),
+		password         => $self->o('password'),
+		gff              => $self->o('gff'),
+		fasta            => $self->o('fasta'),
+		bam              => $self->o('bam'),
+                pipeline_db_name => $self->o('pipeline_db_name'),
+		pipeline_host    => $self->o('pipeline_host'),
+		pipeline_user    => $self->o('pipeline_user'),
+		pipeline_port    => $self->o('pipeline_port'),
                 @common_params,
 	    },
 	    -failed_job_tolerance => 100,
@@ -153,11 +165,15 @@ sub pipeline_analyses {
 	{   -logic_name     => 'run_partial_vep_more_mem',
 	    -module         => 'ModVep::RunPartialVep',
 	    -parameters     => {
-		vep_dir         => $self->o('vep_dir'),
-		password        => $self->o('password'),
-		gff             => $self->o('gff'),
-		fasta           => $self->o('fasta'),
-		bam             => $self->o('bam'),
+		vep_dir          => $self->o('vep_dir'),
+		password         => $self->o('password'),
+		gff              => $self->o('gff'),
+		fasta            => $self->o('fasta'),
+		bam              => $self->o('bam'),
+		pipeline_db_name => $self->o('pipeline_db_name'),
+		pipeline_host    => $self->o('pipeline_host'),
+		pipeline_user    => $self->o('pipeline_user'),
+		pipeline_port    => $self->o('pipeline_port'),
                 @common_params,
 	    },
 	    -failed_job_tolerance => 0,
@@ -180,6 +196,25 @@ sub pipeline_analyses {
 	    },
 	    -input_ids       => [],
 	    -rc_name         => 'default',
+	    -max_retry_count => 0,
+	    -failed_job_tolerance => 10,
+	    -analysis_capacity => $self->o('standard_max_workers'),
+	    -hive_capacity => $self->o('hive_max_workers'),
+	    -flow_into => {
+		-1 => ['process_output_highmem'],
+	    },
+	},
+
+	{   -logic_name      => 'process_output_highmem',
+            -module          => 'ModVep::ProcessOutput',
+            -parameters      => {
+		@common_params,
+	    },
+	    -input_ids       => [],
+	    -failed_job_tolerance => 0,
+	    -rc_name         => 'highmem',
+	    -analysis_capacity => $self->o('highmem_max_workers'),
+	    -hive_capacity => $self->o('hive_max_workers'),
 	    -max_retry_count => 1,
 	},
 
