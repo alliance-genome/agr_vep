@@ -4,6 +4,7 @@ use strict;
 
 use File::Path qw(make_path);
 use Data::Dumper;
+use DBI;
 
 use base ('Bio::EnsEMBL::Variation::Pipeline::BaseVariationProcess');
 
@@ -57,17 +58,19 @@ sub fetch_input {
 sub store_transcript_id_map {
     my $self = shift;
 
-    my $hive_dbh = $self->dbc->db_handle;
+    my $dsn = 'dbi:mysql:database=agr_pathogenicity_predictions_' . $self->required_param('mod') . 
+	';host=' . $ENV{'WORM_DBHOST'} .';port=' . $ENV{'WORM_DBPORT'};
+    my $dbh = DBI->connect($dsn, $ENV{'WORM_DBUSER'}, $self->required_param('password')) or die $DBI::errstr;
     my @create_sql = (
 	"DROP TABLE IF EXISTS transcript_map;",
 	"CREATE TABLE transcript_map (transcript_id varchar(50), transcript_name varchar(50));"
 	);
     foreach my $create_sql (@create_sql) {
-	$hive_dbh->do($create_sql) or $self->throw("Failed to execute: $create_sql");
+	$dbh->do($create_sql) or $self->throw("Failed to execute: $create_sql");
     }
   
     my $insert_sql = "INSERT INTO transcript_map VALUES(?, ?)";
-    my $hive_sth = $hive_dbh->prepare($insert_sql);
+    my $sth = $dbh->prepare($insert_sql);
 
     my %map;
     my $gff_file = $self->required_param('gff');
@@ -82,11 +85,11 @@ sub store_transcript_id_map {
 	$transcript_id =~ s/\s+$//;
 	my $transcript_name = $attributes{'Name'} || $attributes{'name'} || $transcript_id;
 	$transcript_name =~ s/\s+$//;
-	$hive_sth->execute($transcript_id, $transcript_name);
+	$sth->execute($transcript_id, $transcript_name);
     }
     close (GFF);
 
-    $hive_dbh->do("CREATE INDEX transcript_idx ON transcript_map (transcript_id)");
+    $dbh->do("CREATE INDEX transcript_idx ON transcript_map (transcript_id)");
 
     return;
 }
