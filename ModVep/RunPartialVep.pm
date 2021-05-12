@@ -56,9 +56,9 @@ sub create_input_file {
 	system("rm $file") if -e $file;
     }
 
-    my $cmd;
+    my @cmds;
     if ($last_pos == 0) {
-	$cmd = "cp $failed_file $input_file";
+	push @cmds, "cp $failed_file $input_file";
     }
     else {
 	my $grep_cmd = 'grep -n $' . "'" . '\t' . $last_pos . '\t' . $last_id .
@@ -74,11 +74,18 @@ sub create_input_file {
 	my $input_lines = `wc -l < $failed_file`;
 	die "Line count for $failed_file failed: $?" if $?;
 	my $lines_remaining = $input_lines - $lines_printed;
-	$cmd = "tail -n $lines_remaining $failed_file > $input_file";
+
+	# We remove the last lane of the processed file as it may be incomplete
+	$lines_remaining++;
+	push @cmds, "head -n -1 ${failed_file}.vep.vcf > ${failed_file}.vep.vcf.tmp";
+	push @cmds, "mv ${failed_file}.vep.vcf.tmp ${failed_file}.vep.vcf";
+	push @cmds, "tail -n $lines_remaining $failed_file > $input_file";
     }
 
-    my ($exit_code, $stderr, $flat_cmd) = $self->run_system_command($cmd);
-    die "Couldn't create input file: $flat_cmd: $exit_code: $stderr" if $exit_code != 0;
+    for my $cmd (@cmds) {
+	my ($exit_code, $stderr, $flat_cmd) = $self->run_system_command($cmd);
+	die "Couldn't create input file: $flat_cmd: $exit_code: $stderr" if $exit_code != 0;
+    }
 
     return $input_file;
 }
