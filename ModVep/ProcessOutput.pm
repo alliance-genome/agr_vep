@@ -6,7 +6,7 @@ use warnings;
 use File::Copy;
 use Path::Class;
 
-use base ('Bio::EnsEMBL::Variation::Pipeline::BaseVariationProcess');
+use base ('ModVep::BaseModVep');
 
 
 sub run {
@@ -15,6 +15,9 @@ sub run {
     my $input_file = $self->required_param('vep_input_file') . '.vep.vcf';
     my $output_file = $input_file . '.processed';
     unlink $output_file if -e $output_file;
+
+    my $reverse_map = $self->get_reverse_chromosome_map($self->required_param('refseq_chromosomes'),
+							$self->required_param('mod'));
 
     my ($nr_csq_cols, $allele_ix, $pick_flag_ix, $consequence_ix);
     my $in_fh = file($input_file)->openr;
@@ -34,6 +37,8 @@ sub run {
 	    next;
 	}
 	my @columns = split("\t", $line);
+	$columns[0] = $reverse_map->{$columns[0]};
+
 	my ($pre_csq, $csq_string, $post_csq) = $columns[7] =~ /^(.*CSQ=)([^;]+)(.*)$/;
 	die "Could not parse line for CSQ:\n$line\n" unless defined $pre_csq and defined $csq_string and defined $post_csq;
 	my @csq_entries = split(',', $csq_string);

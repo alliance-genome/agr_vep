@@ -3,7 +3,7 @@ package ModVep::RunVep;
 use strict;
 use warnings;
 
-use base ('Bio::EnsEMBL::Variation::Pipeline::BaseVariationProcess');
+use base ('ModVep::BaseModVep');
 
 sub run {
     my $self = shift;
@@ -13,7 +13,9 @@ sub run {
     
     my $fasta_file = $self->required_param('fasta');
     my $gff_file = $self->required_param('gff');
-    my $map_file = $self->required_param('vep_working') . '/transcript_id_name_map.dmp';
+    
+    $self->convert_vcf_chromosomes($self->required_param('mod'), $input_file,
+				   $self->required_param('refseq_chromosomes'));
 
     my $plugin_str = 'ProtFuncTranscriptNameHTP,mod=' . $self->required_param('mod') . ',pass=' .
 	$self->required_param('password');

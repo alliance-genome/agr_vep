@@ -5,7 +5,7 @@ use warnings;
 
 use Path::Class;
 
-use base ('Bio::EnsEMBL::Variation::Pipeline::BaseVariationProcess');
+use base ('ModVep::BaseModVep');
 
 
 sub run {
@@ -14,6 +14,10 @@ sub run {
     my $failed_file = $self->required_param('vep_input_file');
     my $input_file = $self->create_input_file($failed_file);
     my $output_file = $input_file . '.vep.vcf';
+
+    $self->convert_vcf_chromosomes($self->required_param('mod'), $input_file,
+				   $self->required_param('refseq_chromosomes'));
+
 
     my $fasta_file = $self->required_param('fasta');
     my $gff_file = $self->required_param('gff');
