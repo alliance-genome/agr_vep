@@ -63,7 +63,7 @@ sub run {
 	$out_fh->print(join("\t", @columns) . "\n");
     }
 
-    move($output_file, $input_file) or die "Overwriting $input_file with $output_file failed";;
+    unlink $input_file;
 }
     
     

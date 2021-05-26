@@ -19,7 +19,7 @@ sub run {
     while (-d "${working_dir}/${folder_nr}") {
 	my @files = <$working_dir/$folder_nr/*>;
 	for my $file (@files) {
-	    next unless $file =~ /\.vep\.vcf$/;
+	    next unless $file =~ /\.vep\.vcf\.processed$/;
 	    my $cmd = "cat $file >> $out_file";
 	    my ($exit_code, $std_err, $flat_cmd) = $self->run_system_command($cmd);
 	    die "Rejoining VEP output failed [$exit_code]: $std_err" unless $exit_code == 0;    
