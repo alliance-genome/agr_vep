@@ -3,6 +3,9 @@ package ModVep::RunVep;
 use strict;
 use warnings;
 
+use Try::Tiny;
+use IPC::System::Simple qw(system);
+
 use base ('ModVep::BaseModVep');
 
 sub run {
@@ -28,23 +31,22 @@ sub run {
 	$cmd .= ' --bam ' . $self->param('bam');
     }
 	
-    $self->param('vep_failure', 1);
-    my ($exit_code, $stderr, $flat_cmd) = $self->run_system_command($cmd);
-    
+    $self->param('vep_failure', 0);
+    try {
+	system($cmd);
+    }
+    catch {
+	$self->param('vep_failure', 1);
+	$self->warning($_);
+    };
     $self->dbc->disconnect_when_inactive(0);
 
-    if ($exit_code != 0) {
-	die "$flat_cmd - exit code: $exit_code: $stderr";
-    }
-    else {
-	$self->param('vep_failure', 0);
-	unlink $input_file unless $self->required_param('debug');
-    }
-    system("rm ${output_file}_summary.html");
+    unlink $input_file unless $self->param('vep_failure') or $self->required_param('debug');
+    unlink "${output_file}_summary.html";
 }
 
 
-sub post_cleanup {
+sub write_output {
     my $self = shift;
 
     my $branch_nr = $self->param('vep_failure') ? 3 : 2;

@@ -4,6 +4,8 @@ use strict;
 use warnings;
 
 use Path::Class;
+use IPC::System::Simple qw(system);
+use Try::Tiny;
 
 use base ('ModVep::BaseModVep');
 
@@ -33,20 +35,21 @@ sub run {
     if ($self->param('bam')) {
 	$cmd .= ' --bam ' . $self->param('bam');
     }
-
-    $self->param('vep_failure', 1);
-    my ($exit_code, $stderr, $flat_cmd) = $self->run_system_command($cmd);
+    
+    $self->param('vep_failure', 0);
+    try {
+	system($cmd);
+    }
+    catch {
+	$self->param('vep_failure', 1);
+	$self->warnings($_);
+    };
     $self->dbc->disconnect_when_inactive(0);
 
     $self->join_results($failed_file, $input_file);
 
-    if ($exit_code != 0) {
-	die "$flat_cmd - exit code: $exit_code: $stderr" if $exit_code != 0;
-    }
-    else {
-	$self->param('vep_failure', 0);
-	unlink $failed_file unless $self->required_param('debug');
-    }
+    unlink $failed_file unless $self->param('vep_failure') or $self->required_param('debug');
+    unlink "${failed_file}_summary.html";
 }
 
 
@@ -158,7 +161,7 @@ sub last_vep_result_printed {
 }
 
 
-sub post_cleanup {
+sub write_output {
     my $self = shift;
 
     my $branch_nr = $self->param('vep_failure') ? 3 : 2; 
