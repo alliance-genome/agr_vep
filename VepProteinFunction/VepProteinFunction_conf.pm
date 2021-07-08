@@ -198,7 +198,9 @@ sub pipeline_analyses {
 	    -module         => 'VepProteinFunction::UniprotAlign',
 	    -parameters     => {
 		pph_dir      => $self->o('pph_dir'),
+		pph_blast_db => $self->o('pph_blast_db'),
 		pph_working  => $self->o('pph_working'),
+		uniprot_dbs  => $self->o('uniprot_dbs'),
 		@common_params,
 	    },
 	    -max_retry_count => 1,
