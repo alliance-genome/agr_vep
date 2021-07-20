@@ -123,7 +123,7 @@ sub uniprot_fasta_filename{
     elsif ($mod eq 'ZFIN') {
 	$common_name = 'zebrafish';
     }
-    elsif ($mod eq 'human') {
+    elsif ($mod eq 'HUMAN') {
 	$common_name = 'human';
     }
     else {
