@@ -25,7 +25,7 @@ sub run {
 
     # Run VEP
     $self->dbc->disconnect_when_inactive(1);
-    my $cmd = "vep -i $input_file -gff $gff_file --format vcf -fasta $fasta_file --vcf --hgvs --hgvsg -shift_hgvs=0 --symbol --numbers --distance 0 --output_file $output_file --force_overwrite --plugin $plugin_str --plugin GenomePos --check_ref --flag_pick_allele_gene --safe";
+    my $cmd = "vep -i $input_file -gff $gff_file --format vcf -fasta $fasta_file --vcf --hgvs --hgvsg -shift_hgvs=0 --symbol --numbers --distance 0 --output_file $output_file --force_overwrite --plugin $plugin_str --plugin GenomePos --check_ref --flag_pick_allele_gene --safe --remove_hgvsp_version";
     
     if ($self->param('bam')) {
 	$cmd .= ' --bam ' . $self->param('bam');
