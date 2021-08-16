@@ -42,7 +42,7 @@ sub run {
     }
     catch {
 	$self->param('vep_failure', 1);
-	$self->warnings($_);
+	$self->warning($_);
     };
     $self->dbc->disconnect_when_inactive(0);
 
