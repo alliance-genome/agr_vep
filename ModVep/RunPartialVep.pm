@@ -105,6 +105,7 @@ sub join_results {
     my $input_results_file = $input_file . '.vep.vcf';
     
     my @cmds = ("touch $failed_results_file",
+		"touch $input_results_file",
 	        "grep '^#' $input_results_file > $input_results_file.header",
 		"grep -v '^#' $failed_results_file > $failed_results_file.body",
 		"grep -v '^#' $input_results_file > $input_results_file.body",
