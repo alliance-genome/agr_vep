@@ -5,6 +5,7 @@ use warnings;
 
 use File::Copy;
 use Path::Class;
+use Try::Tiny;
 
 use base ('ModVep::BaseModVep');
 
