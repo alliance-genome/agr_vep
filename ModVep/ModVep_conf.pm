@@ -378,6 +378,7 @@ sub pipeline_analyses {
 	    -hive_capacity => $self->o('hive_max_workers'),
 	    -flow_into => {
 		2 => ['process_output_highmem'],
+		-1 => ['process_output_highmem'],
 	    },
 	},
 
