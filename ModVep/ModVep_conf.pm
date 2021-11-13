@@ -55,9 +55,9 @@ sub default_options {
 	lines_per_file => 25000,
 	files_per_folder => 200,
 
-	standard_max_workers    => 200,
-	highmem_max_workers     => 25,
-	hive_max_workers        => 225,
+	standard_max_workers    => 425,
+	highmem_max_workers     => 75,
+	hive_max_workers        => 500,
 
 	debug => 1,
 
@@ -388,7 +388,7 @@ sub pipeline_analyses {
 	    },
 	    -input_ids       => [],
 	    -failed_job_tolerance => 0,
-	    -rc_name         => 'highmem',
+	    -rc_name         => 'moremem',
 	    -analysis_capacity => $self->o('highmem_max_workers'),
 	    -hive_capacity => $self->o('hive_max_workers'),
 	    -max_retry_count => 1,
