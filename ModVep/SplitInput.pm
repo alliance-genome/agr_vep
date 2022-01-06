@@ -5,6 +5,7 @@ use strict;
 use File::Path qw(make_path);
 use Data::Dumper;
 use DBI;
+use Path::Class;
 
 use base ('Bio::EnsEMBL::Variation::Pipeline::BaseVariationProcess');
 
@@ -27,31 +28,63 @@ sub fetch_input {
     my $vcf_file = $self->required_param('vcf');
     my $mod = $self->required_param('mod');
 
-    my $cmd = "split -d -a 5 -l $split_file_length --numeric-suffixes=1 --verbose $vcf_file $output_dir/${mod}_ | wc -l 1>&2";
-    my ($exit_code, $nr_files, $flat_cmd) = $self->run_system_command($cmd);
-    die "Splitting $vcf_file failed: $exit_code: $nr_files" unless $exit_code == 0;
-
-    chomp $nr_files;
-    my $folder_nr = 0;
-    for my $n (1 .. $nr_files) {
-	if ($n % $self->required_param('files_per_folder') == 1) {
-	    $folder_nr++;
-	    make_path("${output_dir}/${folder_nr}", {error => \$err});
-	    die "make_path failed: ".Dumper($err) if $err && @$err;
+    my $in_fh = file($vcf_file)->openr or die "Could not open $vcf_file for reading\n";
+    my $out_fh = file($output_dir . '/headers.vcf')->openw or die "Could not open ${output_dir}/headers.vcf for writing\n";
+    my $line_nr = 0;
+    my $chr_nr = 0;
+    my $chr_file_nr = 0;
+    my $chr_folder_nr = 0;
+    my $previous_chr = 'none';
+    my $chr_file_suffix;
+    while (my $line = $in_fh->getline()) {
+	if ($line =~ /^#/) {
+	    $out_fh->print($line);
 	}
-	while (length $n < 5) {
-	    $n = '0' . $n;
+	else {
+	    $line_nr++;
+	    my ($chr) = $line =~ /^(\S+)\s/;
+	    if ($chr ne $previous_chr) {
+		$previous_chr = $chr;
+		$chr_nr++;
+		$chr_file_nr = 0;
+		$chr_folder_nr = 0;
+		$line_nr = 1;
+		make_path("${output_dir}/${chr_nr}", {error => \$err});
+		die "make_path failed: ".Dumper($err) if $err && @$err;
+	    }
+	    if ($line_nr % $self->required_param('lines_per_file') == 1) {
+		$chr_file_nr++;
+		if ($chr_file_nr % $self->required_param('files_per_folder') == 1) {
+		    $chr_folder_nr++;
+		    make_path("${output_dir}/${chr_nr}/${chr_folder_nr}", {error => \$err});
+		    die "make_path failed: ".Dumper($err) if $err && @$err;
+		}
+		$chr_file_suffix = $chr_file_nr;
+		while (length $chr_file_suffix < 5) {
+		    $chr_file_suffix = '0' . $chr_file_suffix;
+		}
+		my $filename = "${output_dir}/${chr_nr}/${chr_folder_nr}/${mod}_${chr_file_suffix}";
+		$out_fh = file($filename)->openw or die "Could not open $filename for writing\n";
+		$self->print_header($out_fh) if $chr_file_nr == 1;
+		push @split_files, $filename;
+	    }
+	    $out_fh->print($line);
 	}
-	    
-	my $file_location = "${output_dir}/" . $self->required_param('mod') . "_$n";
-	my $file_destination = "${output_dir}/${folder_nr}/" . $self->required_param('mod') . "_$n";
-
-	$self->run_system_command("mv ${file_location} ${file_destination}");
-	push @split_files, $file_destination;
     }
     
     $self->param('vep_output_ids', [map {{vep_input_file => $_}} @split_files]);
 
+}
+
+sub print_header {
+    my ($self, $out_fh) = @_;
+
+    my $in_fh = file($self->required_param('vep_working') . '/headers.vcf')->openr or die "Could not open headers file for reading\n";
+    while (my $line = $in_fh->getline()) {
+	$out_fh->print($line);
+    }
+
+    return;
 }
 
 

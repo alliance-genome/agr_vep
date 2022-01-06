@@ -50,7 +50,7 @@ sub default_options {
         moremem_lsf_options  => '-q' . $self->o('lsf_queue') . ' -R"select[mem>32000] rusage[mem=32000]" -M32000',  
 
 	vep_working            => $self->o('pipeline_dir') . '/' . $self->o('mod') . '_working',
-	out_file               => $self->o('pipeline_dir') . '/' . $self->o('mod') . '.vep.vcf',
+	out_file_prefix        => $self->o('pipeline_dir') . '/' . $self->o('mod') . '.vep.',
         
 	lines_per_file => 25000,
 	files_per_folder => 200,
@@ -292,7 +292,7 @@ sub pipeline_analyses {
 	    -max_retry_count => 0,
 	    -flow_into => {
 		'2->A' => ['run_vep'],
-		'A->1' => ['combine_output'],
+		'A->1' => ['output_factory'],
 	    },
 	},
         
@@ -395,10 +395,20 @@ sub pipeline_analyses {
 	    -max_retry_count => 1,
 	},
 
+	{   -logic_name     => 'output_factory',
+	    -module         => 'ModVep::OutputFactory',
+	    -parameters     => {
+		@common_params,
+	    },
+	    -flow_into      => {
+               1 => ['combine_output'],
+             },
+	},
+	
 	{   -logic_name     => 'combine_output',
 	    -module         => 'ModVep::CombineOutput',
 	    -parameters     => {
-		out_file       => $self->o('out_file'),
+		out_file_prefix  => $self->o('out_file_prefix'),
 		@common_params,
 	    },
 	    -input_ids      => [],
