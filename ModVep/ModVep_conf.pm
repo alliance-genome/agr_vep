@@ -426,7 +426,8 @@ sub pipeline_analyses {
 		@common_params,
 	    },
 	    -flow_into      => {
-               1 => ['combine_output'],
+		'2->A' => ['combine_output'],
+		'A->1' => ['combine_chromosomes']    
              },
 	},
 	
@@ -438,8 +439,17 @@ sub pipeline_analyses {
 	    },
 	    -input_ids      => [],
 	    -rc_name        => 'highmem',
-	},	
-		
+	},
+
+	{   -logic_name     => 'combine_chromosomes',
+	    -module         => 'ModVep::CombineChromosomes',
+	    -parameters     => {
+		out_file_prefix => $self->o('out_file_prefix'),
+		@common_params,
+	    },
+	    -input_ids      => [],
+	    -rc_name        => 'highmem'
+	}	
     ];
 }
 
