@@ -27,8 +27,8 @@ sub run {
 		}
 	    }
 	    my $err;
-	    remove_tree("${working_dir}/${chromosome_nr}", {error => \$err});
-	    die "remove_tree failed for ${working_dir}/${chromosome_nr}: " .Dumper($err) if $err && @$err;
+	    remove_tree($chromosome_dir->stringify, {error => \$err});
+	    die "remove_tree failed for $chromosome_dir: " .Dumper($err) if $err && @$err;
 	}
 
 	my $cmd = "gzip -9 $out_file";
