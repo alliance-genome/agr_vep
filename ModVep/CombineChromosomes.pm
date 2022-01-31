@@ -35,7 +35,7 @@ sub run {
 	}
 
 	my $cmd = "gzip -9 $out_file";
-	my ($exit_code, $std_err, $flat_cmd) = $self->run_system_cmd($cmd);
+	my ($exit_code, $std_err, $flat_cmd) = $self->run_system_command($cmd);
 	die "$cmd failed [$exit_code]: $std_err" unless $exit_code == 0;
     }
 }
