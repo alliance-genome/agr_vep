@@ -4,6 +4,7 @@ use strict;
 use base ('Bio::EnsEMBL::Variation::Pipeline::BaseVariationProcess');
 use Path::Class;
 use File::Path qw(remove_tree);
+use Data::Dumper;
 
 sub run {
     my $self = shift;
