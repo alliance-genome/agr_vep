@@ -3,6 +3,7 @@ package ModVep::CombineChromosomes;
 use strict;
 use base ('Bio::EnsEMBL::Variation::Pipeline::BaseVariationProcess');
 use Path::Class;
+use File::Path qw(remove_tree);
 
 sub run {
     my $self = shift;
