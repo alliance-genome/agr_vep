@@ -15,6 +15,7 @@ sub run {
 	my $first_file = 1;
 	my $working_dir = dir($self->required_param('vep_working'));
 	for my $chromosome_dir ($working_dir->children()) {
+	    next unless $chromosome_dir->is_dir;
 	    for my $subdir ($chromosome_dir->children()) {
 		for my $file ($subdir->children()) {
 		    next unless $file->stringify() =~ /\.vep\.vcf\.processed$/;
