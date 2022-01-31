@@ -36,3 +36,5 @@ sub run {
 	die "$cmd failed [$exit_code]: $std_err" unless $exit_code == 0;
     }
 }
+
+1;
