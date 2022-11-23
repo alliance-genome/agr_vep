@@ -55,9 +55,9 @@ sub default_options {
 	lines_per_file => 25000,
 	files_per_folder => 200,
 
-	standard_max_workers    => 425,
+	standard_max_workers    => 275,
 	highmem_max_workers     => 75,
-	hive_max_workers        => 500,
+	hive_max_workers        => 350,
 
 	debug => 1,
 

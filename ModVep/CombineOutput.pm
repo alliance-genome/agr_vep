@@ -14,7 +14,7 @@ sub run {
     my $working_dir = $self->required_param('vep_working');
     my $chromosome_nr = $self->required_param('chromosome_nr');
     my $mod = $self->required_param('mod');
-    my $chromosome_id = `tail -n 1 ${working_dir}/${chromosome_nr}/1/${mod}_00001.vep.vcf.processed | cut -f 1`;
+    my $chromosome_id = `tail -n 10 ${working_dir}/${chromosome_nr}/1/${mod}_00001.vep.vcf.processed | head -n 1 | cut -f 1`;
     chomp($chromosome_id);
     my $out_file = $self->required_param('out_file_prefix') . $chromosome_id . '.vcf';
     
@@ -31,7 +31,7 @@ sub run {
 	$folder_nr++;
     }
 
-    for my $cmd("bgzip -l 9 ${out_file}", "tabix -p vcf ${out_file}.gz") {
+    for my $cmd("bgzip -l 9 ${out_file}", "tabix -p vcf ${out_file}.gz", "vcf-validator ${out_file}.gz") {
 	($exit_code, $std_err, $flat_cmd) = $self->run_system_command($cmd);
 	die "$cmd failed [$exit_code]: $std_err" unless $exit_code == 0;
     }
