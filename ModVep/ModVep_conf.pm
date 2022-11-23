@@ -426,7 +426,7 @@ sub pipeline_analyses {
 		@common_params,
 	    },
 	    -flow_into      => {
-		'2->A' => ['combine_output'],
+		'3->A' => ['combine_output'],
 		'A->1' => ['combine_chromosomes']    
              },
 	},

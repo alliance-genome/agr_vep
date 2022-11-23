@@ -22,7 +22,7 @@ sub run {
 sub write_output {
     my $self = shift;
 
-    $self->dataflow_output_id($self->param('chromosome_nrs'), 1);
+    $self->dataflow_output_id($self->param('chromosome_nrs'), 3);
 }
 
 1;
