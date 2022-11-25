@@ -36,11 +36,11 @@ sub run {
 	die "$cmd failed [$exit_code]: $std_err" unless $exit_code == 0;
     }
 
-    unless ($mod eq 'RGD') {
-	my $err;
-	remove_tree("${working_dir}/${chromosome_nr}", {error => \$err});
-	die "remove_tree failed for ${working_dir}/${chromosome_nr}: " .Dumper($err) if $err && @$err;
-    }
+#    unless ($mod eq 'RGD') {
+#	my $err;
+#	remove_tree("${working_dir}/${chromosome_nr}", {error => \$err});
+#	die "remove_tree failed for ${working_dir}/${chromosome_nr}: " .Dumper($err) if $err && @$err;
+#    }
 }
 
 
