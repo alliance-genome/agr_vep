@@ -12,7 +12,7 @@ sub run {
     my $mod = $self->required_param('mod');
     my $out_file = $self->required_param('out_file_prefix') . 'all.vcf';
     my $out_fh = file($out_file)->openw;
-    if ($mod eq 'RGD') {
+    if ($mod eq 'RGD' || $mod eq 'MGI' || $mod eq 'HUMAN') {
 	my $first_file = 1;
 	my $working_dir = dir($self->required_param('vep_working'));
 	for my $chromosome_dir ($working_dir->children()) {
@@ -34,9 +34,10 @@ sub run {
 	    die "remove_tree failed for $chromosome_dir: " .Dumper($err) if $err && @$err;
 	}
 
-	my $cmd = "gzip -9 $out_file";
-	my ($exit_code, $std_err, $flat_cmd) = $self->run_system_command($cmd);
-	die "$cmd failed [$exit_code]: $std_err" unless $exit_code == 0;
+	for my $cmd( "bgzip -l -9 $out_file", "tabix -p vcf ${out_file}.gz") {
+	    my ($exit_code, $std_err, $flat_cmd) = $self->run_system_command($cmd);
+	    die "$cmd failed [$exit_code]: $std_err" unless $exit_code == 0;
+	}
     }
 }
 
