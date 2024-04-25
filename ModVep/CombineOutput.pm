@@ -31,16 +31,17 @@ sub run {
 	$folder_nr++;
     }
 
+    if (-e $out_file . ".gz") {
+	system("rm ${out_file}.gz");
+    }
+    if (-e $out_file . ".gz.tbi") {
+	system("rm ${out_file}.gz.tbi");
+    }
     for my $cmd("bgzip -l 9 ${out_file}", "tabix -p vcf ${out_file}.gz", "vcf-validator ${out_file}.gz") {
 	($exit_code, $std_err, $flat_cmd) = $self->run_system_command($cmd);
 	die "$cmd failed [$exit_code]: $std_err" unless $exit_code == 0;
     }
 
-    unless ($mod eq 'RGD' || $mod eq 'MGI' || $mod eq 'HUMAN') {
-	my $err;
-	remove_tree("${working_dir}/${chromosome_nr}", {error => \$err});
-	die "remove_tree failed for ${working_dir}/${chromosome_nr}: " .Dumper($err) if $err && @$err;
-    }
 }
 
 
