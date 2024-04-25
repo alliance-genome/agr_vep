@@ -45,10 +45,14 @@ sub default_options {
         },
 
         # configuration for the various resource options used in the pipeline        
-	default_lsf_options  => '-q' . $self->o('lsf_queue') . ' -R"select[mem>3000] rusage[mem=3000]" -M3000',    
-        highmem_lsf_options  => '-q' . $self->o('lsf_queue') . ' -R"select[mem>8000] rusage[mem=8000]" -M8000',  
-        moremem_lsf_options  => '-q' . $self->o('lsf_queue') . ' -R"select[mem>32000] rusage[mem=32000]" -M32000',  
-
+	lowmem_10sec_slurm_options => ' --partition=production --time=0:00:10 --mem=100m',
+	default_5min_slurm_options => ' --partition=production --time=0:05:00 --mem=3000m',
+	default_4hr_slurm_options  => ' --partition=production --time=4:00:00 --mem=3000m',
+	highmem_4hr_slurm_options  => ' --partition=production --time=4:00:00 --mem=8000m',
+	highmem_12hr_slurm_options => ' --partition=production --time=12:00:00 --mem=8000m',
+	moremem_5min_slurm_options => ' --partition=production --time=0:05:00 --mem=32000m',
+	moremem_4hr_slurm_options  => ' --partition=production --time=4:00:00 --mem=32000m',
+	
 	vep_working            => $self->o('pipeline_dir') . '/' . $self->o('mod') . '_working',
 	out_file_prefix        => $self->o('pipeline_dir') . '/' . $self->o('mod') . '.vep.',
         
@@ -284,9 +288,13 @@ sub pipeline_create_commands {
 sub resource_classes {
     my ($self) = @_;
     return {
-          'default'  => { 'LSF' => $self->o('default_lsf_options')  },
-          'highmem'  => { 'LSF' => $self->o('highmem_lsf_options')  },
-          'moremem'  => { 'LSF' => $self->o('moremem_lsf_options')  },
+	lowmem_10sec => { 'SLURM' => $self->o('lowmem_10sec_slurm_options') },
+	default_5min => { 'SLURM' => $self->o('default_5min_slurm_options')  },
+	default_4hr  => { 'SLURM' => $self->o('default_4hr_slurm_options')  },
+	highmem_4hr  => { 'SLURM' => $self->o('highmem_4hr_slurm_options')  },
+	highmem_12hr => { 'SLURM' => $self->o('highmem_12hr_slurm_options')  },
+	moremem_5min => { 'SLURM' => $self->o('moremem_5min_slurm_options') },
+	moremem_4hr  => { 'SLURM' => $self->o('moremem_4hr_slurm_options')  },
     };
 }
 
@@ -313,7 +321,7 @@ sub pipeline_analyses {
 		@common_params,
 	    },
 	    -input_ids => [{}],
-	    -rc_name   => 'default',
+	    -rc_name   => 'default_4hr',
 	    -max_retry_count => 0,
 	    -flow_into => {
 		'2->A' => ['run_vep'],
@@ -336,7 +344,7 @@ sub pipeline_analyses {
             -input_ids      => [],
             -analysis_capacity  => $self->o('standard_max_workers'),
 	    -hive_capacity => $self->o('hive_max_workers'),
-	    -rc_name        => 'default',
+	    -rc_name        => 'default_4hr',
             -flow_into      => {
 	      3 => ['run_partial_vep'],
 	      2 => ['process_output'],
@@ -359,7 +367,7 @@ sub pipeline_analyses {
 	    -input_ids       => [],
 	    -analysis_capacity => $self->o('highmem_max_workers'),
 	    -hive_capacity => $self->o('hive_max_workers'),
-	    -rc_name => 'highmem',
+	    -rc_name => 'highmem_4hr',
 	    -flow_into => {
 		3 => ['run_partial_vep_more_mem'],
 		2 => ['process_output'],
@@ -382,7 +390,7 @@ sub pipeline_analyses {
 	    -input_ids       => [],
 	    -analysis_capacity => $self->o('highmem_max_workers'),
 	    -hive_capacity => $self->o('hive_max_workers'),
-	    -rc_name => 'moremem',
+	    -rc_name => 'moremem_4hr',
 	    -flow_into => {
 		3 => ['run_partial_vep_more_mem'],
 		2 => ['process_output'],
@@ -396,7 +404,7 @@ sub pipeline_analyses {
 		@common_params,
 	    },
 	    -input_ids       => [],
-	    -rc_name         => 'default',
+	    -rc_name         => 'default_5min',
 	    -max_retry_count => 0,
 	    -failed_job_tolerance => 10,
 	    -analysis_capacity => $self->o('standard_max_workers'),
@@ -414,7 +422,7 @@ sub pipeline_analyses {
 	    },
 	    -input_ids       => [],
 	    -failed_job_tolerance => 0,
-	    -rc_name         => 'moremem',
+	    -rc_name         => 'moremem_5min',
 	    -analysis_capacity => $self->o('highmem_max_workers'),
 	    -hive_capacity => $self->o('hive_max_workers'),
 	    -max_retry_count => 1,
@@ -425,6 +433,7 @@ sub pipeline_analyses {
 	    -parameters     => {
 		@common_params,
 	    },
+	    -rc_name        => 'lowmem_10sec',
 	    -flow_into      => {
 		'3->A' => ['combine_output'],
 		'A->1' => ['combine_chromosomes']    
@@ -438,7 +447,7 @@ sub pipeline_analyses {
 		@common_params,
 	    },
 	    -input_ids      => [],
-	    -rc_name        => 'highmem',
+	    -rc_name        => 'highmem_4hr',
 	},
 
 	{   -logic_name     => 'combine_chromosomes',
@@ -448,7 +457,7 @@ sub pipeline_analyses {
 		@common_params,
 	    },
 	    -input_ids      => [],
-	    -rc_name        => 'highmem'
+	    -rc_name        => 'highmem_12hr'
 	}	
     ];
 }
