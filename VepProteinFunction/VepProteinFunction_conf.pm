@@ -60,13 +60,14 @@ sub default_options {
 	pfdb_name => 'agr_pathogenicity_predictions_' . $self->o('mod'), 
 
         # configuration for the various resource options used in the pipeline
-        
-        tinymem_lsf_options  => '-q' . $self->o('lsf_queue') . ' -R"select[mem>500] rusage[mem=500]" -M500', 
-	default_lsf_options  => '-q' . $self->o('lsf_queue') . ' -R"select[mem>2000] rusage[mem=2000]" -M2000',      
-        medmem_lsf_options   => '-q' . $self->o('lsf_queue') . ' -R"select[mem>8000] rusage[mem=8000]" -M8000',    
-        highmem_lsf_options  => '-q' . $self->o('lsf_queue') . ' -R"select[mem>13500] rusage[mem=13500]" -M13500',  
-	supermem_lsf_options => '-q' . $self->o('lsf_queue') . ' -R"select[mem>20000] rusage[mem=20000]" -M20000',
-
+	tinymem_2min_slurm_options => ' --partition=production --time=0:02:00 --mem=500m',
+	default_5min_slurm_options => ' --partition=production --time=0:05:00 --mem=2000m',
+	medmem_5min_slurm_options => ' --partition=production --time=0:05:00 --mem=8000m',
+	highmem_12hr_slurm_options => ' --partition=production --time=12:00:00 --mem=13500m',
+	supermem_2hr_slurm_options => ' --partition=production --time=2:00:00 --mem=20000m',
+	supermem_12hr_slurm_options => ' --partition=production --time=12:00:00 --mem=20000m',
+	highmem_48hr_slurm_options => ' --partition=production --time=2-00:00:00 --mem=13500m',
+	
         sift_working            => $self->o('pipeline_dir').'/sift_working',
 	pph_working             => $self->o('pipeline_dir').'/pph_working',
         
@@ -112,11 +113,13 @@ sub pipeline_create_commands {
 sub resource_classes {
     my ($self) = @_;
     return {
-	'tinymem'  => { 'LSF' => $self->o('tinymem_lsf_options')  },
-	'default'  => { 'LSF' => $self->o('default_lsf_options')  },
-	'medmem'   => { 'LSF' => $self->o('medmem_lsf_options')   },
-	'highmem'  => { 'LSF' => $self->o('highmem_lsf_options')  },
-	'supermem' => { 'LSF' => $self->o('supermem_lsf_options') },
+	'tinymem_2min'  => { 'SLURM' => $self->o('tinymem_2min_slurm_options')  },
+	'default_5min'  => { 'SLURM' => $self->o('default_5min_slurm_options')  },
+	'medmem_5min'   => { 'SLURM' => $self->o('medmem_5min_slurm_options')   },
+	'highmem_12hr'  => { 'SLURM' => $self->o('highmem_12hr_slurm_options')  },
+	'highmem_48hr'  => { 'SLURM' => $self->o('highmem_48hr_slurm_options')  },
+	'supermem_2hr'  => { 'SLURM' => $self->o('supermem_2hr_slurm_options')  },
+	'supermem_12hr' => { 'SLURM' => $self->o('supermem_12hr_slurm_options') },
     };
 }
 
@@ -149,7 +152,7 @@ sub pipeline_analyses {
 		@common_params,
             },
 	    -input_ids => [{}],
-            -rc_name    => 'supermem',
+            -rc_name    => 'supermem_2hr',
             -max_retry_count => 0,
             -flow_into  => {
                 2 => [ 'uniprot_align' ],
@@ -171,7 +174,7 @@ sub pipeline_analyses {
             -max_retry_count => 0,
             -analysis_capacity  => $self->o('sift_max_workers'),
 	    -hive_capacity => $self->o('hive_max_workers'),
-	    -rc_name        => 'highmem',
+	    -rc_name        => 'highmem_48hr',
             -flow_into      => {
               -1 => ['run_sift_supermem'],
             },
@@ -190,7 +193,7 @@ sub pipeline_analyses {
             -input_ids      => [],
 	    -analysis_capacity  => $self->o('supermem_max_workers'),
 	    -hive_capacity => $self->o('hive_max_workers'),
-            -rc_name        => 'supermem',
+            -rc_name        => 'supermem_12hr',
             -failed_job_tolerance => 100,
         },
 
@@ -206,7 +209,7 @@ sub pipeline_analyses {
 	    -max_retry_count => 1,
 	    -analysis_capacity => $self->o('blast_max_workers'),
 	    -hive_capacity => $self->o('hive_max_workers'),
-	    -rc_name       => 'highmem',
+	    -rc_name       => 'highmem_12hr',
 	    -flow_into     => {
 		2   => [ 'run_pph' ],
 	    },
@@ -224,7 +227,7 @@ sub pipeline_analyses {
 	    -max_retry_count => 0,
 	    -analysis_capacity  => $self->o('pph_max_workers'),
 	    -hive_capacity => $self->o('hive_max_workers'),
-	    -rc_name        => 'default',
+	    -rc_name        => 'default_5min',
 	    -flow_into      => {
 		2   => [ 'run_weka' ],
 		-1  => [ 'run_pph_medmem' ],
@@ -243,7 +246,7 @@ sub pipeline_analyses {
 	    -max_retry_count => 0,
 	    -analysis_capacity  => $self->o('pph_max_workers'),
 	    -hive_capacity => $self->o('hive_max_workers'),
-	    -rc_name        => 'medmem',
+	    -rc_name        => 'medmem_5min',
 	    -flow_into      => {
 		2   => [ 'run_weka' ],
 	    },
@@ -262,7 +265,7 @@ sub pipeline_analyses {
             -max_retry_count => 0,
             -analysis_capacity  => $self->o('weka_max_workers'),
 	    -hive_capacity => $self->o('hive_max_workers'),
-	    -rc_name        => 'tinymem',
+	    -rc_name        => 'tinymem_2min',
             -flow_into      => {},
             -failed_job_tolerance => 5,
         },
