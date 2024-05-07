@@ -49,7 +49,7 @@ sub default_options {
 	default_5min_slurm_options => ' --partition=production --time=0:05:00 --mem=3000m',
 	default_4hr_slurm_options  => ' --partition=production --time=4:00:00 --mem=3000m',
 	highmem_4hr_slurm_options  => ' --partition=production --time=4:00:00 --mem=8000m',
-	highmem_12hr_slurm_options => ' --partition=production --time=12:00:00 --mem=8000m',
+	highmem_1day_slurm_options => ' --partition=production --time=1-00:00:00 --mem=8000m',
 	moremem_5min_slurm_options => ' --partition=production --time=0:05:00 --mem=32000m',
 	moremem_4hr_slurm_options  => ' --partition=production --time=4:00:00 --mem=32000m',
 	
@@ -292,7 +292,7 @@ sub resource_classes {
 	default_5min => { 'SLURM' => $self->o('default_5min_slurm_options')  },
 	default_4hr  => { 'SLURM' => $self->o('default_4hr_slurm_options')  },
 	highmem_4hr  => { 'SLURM' => $self->o('highmem_4hr_slurm_options')  },
-	highmem_12hr => { 'SLURM' => $self->o('highmem_12hr_slurm_options')  },
+	highmem_1day => { 'SLURM' => $self->o('highmem_1day_slurm_options')  },
 	moremem_5min => { 'SLURM' => $self->o('moremem_5min_slurm_options') },
 	moremem_4hr  => { 'SLURM' => $self->o('moremem_4hr_slurm_options')  },
     };
@@ -457,7 +457,7 @@ sub pipeline_analyses {
 		@common_params,
 	    },
 	    -input_ids      => [],
-	    -rc_name        => 'highmem_12hr'
+	    -rc_name        => 'highmem_1day'
 	}	
     ];
 }
