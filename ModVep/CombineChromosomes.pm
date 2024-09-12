@@ -16,8 +16,10 @@ sub run {
     my $working_dir = dir($self->required_param('vep_working'));
     for my $chromosome_dir ($working_dir->children()) {
 	next unless $chromosome_dir->is_dir;
-	for my $subdir ($chromosome_dir->children()) {
-	    for my $file ($subdir->children()) {
+	my $chr_part_nr = 1;
+	while (-d "${chromosome_dir}/${chr_part_nr}") {
+	    my @files = <${chromosome_dir}/${chr_part_nr}/*>;
+	    for my $file (@files) {
 		next unless $file->stringify() =~ /\.vep\.vcf\.processed$/;
 		my $in_fh = file($file)->openr;
 		while ( my $line = $in_fh->getline()) {
@@ -27,6 +29,7 @@ sub run {
 		}
 		$first_file = 0;
 	    }
+	    $chr_part_nr++;
 	}
 	my $err;
 	remove_tree($chromosome_dir->stringify, {error => \$err});
