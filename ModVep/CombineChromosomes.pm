@@ -20,7 +20,7 @@ sub run {
 	while (-d "${chromosome_dir}/${chr_part_nr}") {
 	    my @files = <${chromosome_dir}/${chr_part_nr}/*>;
 	    for my $file (@files) {
-		next unless $file->stringify() =~ /\.vep\.vcf\.processed$/;
+		next unless $file =~ /\.vep\.vcf\.processed$/;
 		my $in_fh = file($file)->openr;
 		while ( my $line = $in_fh->getline()) {
 		    next if !$first_file and $line =~ /^#/;
