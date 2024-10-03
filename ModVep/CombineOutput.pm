@@ -14,7 +14,7 @@ sub run {
     my $working_dir = $self->required_param('vep_working');
     my $chromosome_nr = $self->required_param('chromosome_nr');
     my $mod = $self->required_param('mod');
-    my $chromosome_id = `tail -n 10 ${working_dir}/${chromosome_nr}/1/${mod}_00001.vep.vcf.processed | head -n 1 | cut -f 1`;
+    my $chromosome_id = `grep -v '^#' ${working_dir}/${chromosome_nr}/1/${mod}_00001.vep.vcf.processed | head -n 1 | cut -f 1`;
     chomp($chromosome_id);
     my $out_file = $self->required_param('out_file_prefix') . $chromosome_id . '.vcf';
     
