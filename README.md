@@ -15,13 +15,6 @@ See the README files in each folder for details of the individual pipelines.
 - UPDATE mode checks for existing prediction matrices, or sequences for which there were valid reasons for being unable to generate protein function annotations, and updates the database for new sequences only.
 
 
-## HumanVep
-
-- Runs VEP on human variant VCF file (obtained from the EnsEMBL FTP site).
-- Splits input files, runs VEP in parallel, then combines the output.
-- Uses the EnsEMBL merged (EnsEMBL & RefSeq) cached database to retrieve VEP annotations.
-
-
 ## ModVep
 
 - Runs VEP on MOD high throughput variation VCF files
