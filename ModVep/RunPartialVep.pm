@@ -30,7 +30,7 @@ sub run {
 
     # Run VEP on new file
     $self->dbc->disconnect_when_inactive(1);
-    my $cmd = "vep -i $input_file -gff $gff_file --format vcf -fasta $fasta_file --vcf --hgvs --hgvsg -shift_hgvs=0 --symbol --numbers --distance 0 --output_file $output_file --force_overwrite --plugin $plugin_str --plugin GenomePos --check_ref --flag_pick_allele_gene --safe" ;
+    my $cmd = "vep -i $input_file -gff $gff_file --format vcf -fasta $fasta_file --vcf --hgvs --hgvsg -shift_hgvs=0 --symbol --numbers --distance 0 --output_file $output_file --force_overwrite --plugin $plugin_str --plugin GenomePos --check_ref --flag_pick_allele_gene --safe --remove_hgvsp_version" ;
 
     if ($self->param('bam')) {
 	$cmd .= ' --bam ' . $self->param('bam');
@@ -42,7 +42,7 @@ sub run {
     }
     catch {
 	$self->param('vep_failure', 1);
-	$self->warnings($_);
+	$self->warning($_);
     };
     $self->dbc->disconnect_when_inactive(0);
 
@@ -105,6 +105,7 @@ sub join_results {
     my $input_results_file = $input_file . '.vep.vcf';
     
     my @cmds = ("touch $failed_results_file",
+		"touch $input_results_file",
 	        "grep '^#' $input_results_file > $input_results_file.header",
 		"grep -v '^#' $failed_results_file > $failed_results_file.body",
 		"grep -v '^#' $input_results_file > $input_results_file.body",

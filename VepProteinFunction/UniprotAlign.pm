@@ -69,7 +69,7 @@ sub run {
     # Carry out BLAST alignment of seq against Uniref100 DB
     $self->dbc->disconnect_when_inactive(1);
 
-    my $uniref_db = $self->required_param('pph_dir') . '/nrdb/uniref100';
+    my $uniref_db = $self->required_param('pph_blast_db');
     my $blast_cmd = "blastp -seg yes -evalue 1e-3 -num_threads 1 -max_target_seqs 1000 -outfmt 5 -db $uniref_db -query $blast_query -out $blast_out";
     my ($exit_code, $stderr, $flat_cmd) = $self->run_system_command($blast_cmd, {timeout => 36000});
 
@@ -130,7 +130,7 @@ sub uniprot_fasta_filename{
 	die "Unrecognised MOD: $mod";
     }
 
-    my $filename = $self->required_param('pph_dir') . '/uniprot/' . $common_name . '.seq';
+    my $filename = $self->required_param('uniprot_dbs') . '/' . $common_name . '.seq';
     unless (-e $filename) {
 	die "Uniprot database does not exist: $filename";
     }
