@@ -92,8 +92,8 @@ sub store_transcript_id_map {
     my $self = shift;
 
     my $dsn = 'dbi:mysql:database=agr_pathogenicity_predictions_' . $self->required_param('mod') . 
-	';host=' . $ENV{'WORM_DBHOST'} .';port=' . $ENV{'WORM_DBPORT'};
-    my $dbh = DBI->connect($dsn, $ENV{'WORM_DBUSER'}, $self->required_param('password')) or die $DBI::errstr;
+	';host=' . $ENV{'VEP_DBHOST'} .';port=' . $ENV{'VEP_DBPORT'};
+    my $dbh = DBI->connect($dsn, $ENV{'VEP_DBUSER'}, $self->required_param('password')) or die $DBI::errstr;
     my @create_sql = (
 	"DROP TABLE IF EXISTS transcript_map;",
 	"CREATE TABLE transcript_map (transcript_id varchar(50), transcript_name varchar(50));"

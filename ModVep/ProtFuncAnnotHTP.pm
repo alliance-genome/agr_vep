@@ -35,10 +35,10 @@ sub new {
     my $param_hash = $self->params_to_hash();
 
     my $mod = $param_hash->{mod};
-    my $db = 'agr_pathogenicity_predictions_' . $mod;
-    my $host = $ENV{'WORM_DBHOST'};
-    my $user = $ENV{'WORM_DBUSER'};
-    my $port = $ENV{'WORM_DBPORT'};
+    my $db = $ENV{'PATH_PRED_DB_PREFIX'} . $mod;
+    my $host = $ENV{'VEP_DBHOST'};
+    my $user = $ENV{'VEP_DBUSER'};
+    my $port = $ENV{'VEP_DBPORT'};
     $self->{pass} = $param_hash->{'pass'};
 
     my $query = qq{

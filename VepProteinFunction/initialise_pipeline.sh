@@ -25,7 +25,13 @@ pph_conf_dir=
 # location of blastpgp etc.
 ncbi_dir=
 
-# location of protein database used to build alignments for SIFT
+# location of protein database used to build alignments for SIFT (UniRef90)
 blastdb=
 
-init_pipeline.pl VepProteinFunction::VepProteinFunction_conf -mod $mod -agr_fasta $agr_fasta -agr_gff $agr_gff -agr_bam $agr_bam -hive_root_dir $hive_root_dir -pipeline_base_dir $pipeline_base_dir -pipeline_host $pipeline_host -pipeline_user $pipeline_user -pipeline_port $pipeline_port -lsf_queue $lsf_queue -sift_dir $sift_dir -pph_dir $pph_dir -pph_conf_dir $pph_conf_dir -ncbi_dir $ncbi_dir -blast_db $blastdb -password $1 
+# location of BLAST DBs used for PolyPhen (UniRef100)
+pph_blast_db=
+
+# location of UniProt DBs
+uniprot_dbs=
+
+init_pipeline.pl VepProteinFunction::VepProteinFunction_conf -mod $mod -agr_fasta $agr_fasta -agr_gff $agr_gff -agr_bam $agr_bam -hive_root_dir $hive_root_dir -pipeline_base_dir $pipeline_base_dir -pipeline_host $pipeline_host -pipeline_user $pipeline_user -pipeline_port $pipeline_port -sift_dir $sift_dir -pph_dir $pph_dir -pph_conf_dir $pph_conf_dir -ncbi_dir $ncbi_dir -blast_db $blastdb -pph_blast_db $pph_blast_db -uniprot_dbs $uniprot_dbs -password $1 

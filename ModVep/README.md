@@ -41,7 +41,6 @@ The following variables need to be set in the `initialise_pipeline.sh` script:
 - `pipeline_host` - MySQL database server for pipeline databases.
 - `pipeline_user` - MySQL user.
 - `pipeline_port` - MySQL server port.
-- `lsf_queue` - name of the LSF queue used for running jobs on the cluster.
 - `vep_dir` - VEP installation directory.
 
 The pipeline should be initialised using the `runpipeline.sh` script.  The password for the MySQL databases needs to be specified as the first argument.

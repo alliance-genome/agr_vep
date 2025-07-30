@@ -87,12 +87,13 @@ The following variables need to be set in the `initialise_pipeline.sh` script:
 - `pipeline_host` - MySQL database server for pipeline databases.
 - `pipeline_user` - MySQL user.
 - `pipeline_port` - MySQL server port.
-- `lsf_queue` - name of the LSF queue used for running jobs on the cluster.
 - `sift_dir` - SIFT installation directory.
 - `pph_dir` - PolyPhen2 installation directory.
 - `pph_conf_dir` - directory containing species-specific PolyPhen2 config files for the appropriate species.
 - `ncbi_dir` - location of blastpgp
 - `blastdb` - location of the protein database used to build alignments for SIFT (uniref90)
+- `pph_blast_db` - location of the protein database used to build alignments for PolyPhen (uniref100)
+- `uniprot_dbs` - location of the uniprot species-specific BLAST protein DBs
 
 The pipeline should be initialised using the `runpipeline.sh` script.  The password for the MySQL databases needs to be specified as the first argument.
 - Enter a `screen` or `tmux` session

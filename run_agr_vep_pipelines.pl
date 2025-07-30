@@ -40,7 +40,7 @@ const my @IDS_TO_MAP => ('symbol', 'entrez_id', 'ensembl_gene_id', 'vega_id', 'u
 const my $CHECKSUMS_FILE => $ENV{'AGR_VEP_BASE_DIR'} . '/mod_file_checksums.txt';
 const my $HUMAN_FILES_DIR => $ENV{'AGR_VEP_BASE_DIR'} . '/human_vep_input_files';
 const my $MOUSE_FILES_DIR => $ENV{'AGR_VEP_BASE_DIR'} . '/mouse_vep_input_files';
-const my $RESOURCES_DIR => $ENV{'AGR_BASE_DIR'} . '/resources';
+const my $RESOURCES_DIR => $ENV{'AGR_VEP_REPO_DIR'} . '/resources';
 
 const my %REFSEQ_CHROMOSOMES => (
     'FB'   => {
@@ -486,7 +486,7 @@ sub download_from_agr {
 	run_slurm_job("samtools index ${mod}_BAM.bam", "Indexing $mod BAM file", $log, '00:30:00', 4, '/dev/null', '/dev/null');
 	
 	unlink "${mod}_FASTA.fa.fai" if -e "${mod}_FASTA.fa.fai";
-	run_slurm_job('python3 ' . $ENV{'CVS_DIR'} . "/AGR/agr_variations_json2vcf.py -j ${mod}_VARIATION.json -m $mod -g ${mod}_GFF.gff " .
+	run_slurm_job('python3 ' . $ENV{'AGR_VEP_REPO_DIR'} . "agr_variations_json2vcf.py -j ${mod}_VARIATION.json -m $mod -g ${mod}_GFF.gff " .
 		      "-f ${mod}_FASTA.fa -o ${mod}_VCF.vcf", "Converting $mod phenotypic variants JSON to VCF", $log, '01:30:00', 8, '/dev/null', '/dev/null') if -e "${mod}_VARIATION.json";
 	if ($mod eq 'HUMAN') {
 	    # May need to reimplement below once we move back to full set of human variants and not just RGD-submitted ClinVar variants
@@ -628,16 +628,16 @@ sub calculate_pathogenicity_predictions {
     my $init_cmd = "init_pipeline.pl VepProteinFunction::VepProteinFunction_conf -mod $mod" .
 	" -agr_fasta ${mod}_FASTA.refseq.fa -agr_gff ${mod}_GFF.refseq.gff -agr_bam ${mod}_BAM.bam" . 
 	' -hive_root_dir ' . $ENV{'HIVE_ROOT_DIR'} . ' -pipeline_base_dir ' . $ENV{'PATH_PRED_WORKING_DIR'} .
-	' -pipeline_host ' . $ENV{'WORM_DBHOST'} . ' -pipeline_user ' . $ENV{'WORM_DBUSER'} .
-	' -pipeline_port ' . $ENV{'WORM_DBPORT'} .
+	' -pipeline_host ' . $ENV{'VEP_DBHOST'} . ' -pipeline_user ' . $ENV{'VEP_DBUSER'} .
+	' -pipeline_port ' . $ENV{'VEP_DBPORT'} .
 	' -sift_dir ' . $ENV{'SIFT_DIR'} . ' -pph_dir ' . $ENV{'PPH_DIR'} . ' -pph_conf_dir ' . $ENV{'PPH_CONF_DIR'} . '/' . $mod .
 	' -ncbi_dir ' . $ENV{'NCBI_DIR'} . ' -blastdb ' . $ENV{'BLAST_DB'} . ' -pph_blast_db ' . $ENV{'PPH_BLAST_DB'} .
 	' -uniprot_dbs ' . $ENV{'UNIPROT_DBS'} . ' -password ' . $password;
     
     run_system_cmd($init_cmd, "Initialising $mod pathogenicity prediction eHive pipeline", $log);
     
-    my $ehive_url = 'mysql://' . $ENV{'WORM_DBUSER'} . ':' . $password . '@' . $ENV{'WORM_DBHOST'} . ':' . 
-	$ENV{'WORM_DBPORT'} . '/agr_pathogenicity_predictions_' . lc($mod) . '_ehive';
+    my $ehive_url = 'mysql://' . $ENV{'VEP_DBUSER'} . ':' . $password . '@' . $ENV{'VEP_DBHOST'} . ':' . 
+	$ENV{'VEP_DBPORT'} . '/agr_pathogenicity_predictions_' . lc($mod) . '_ehive';
     $ENV{EHIVE_URL} = $ehive_url;
     run_system_cmd("beekeeper.pl -url $ehive_url -loop", "Running $mod pathogenicity prediction eHive pipeline", $log);
     
@@ -709,13 +709,13 @@ sub run_vep_on_htp_variations{
 
     my $init_cmd = "init_pipeline.pl ModVep::ModVep_conf -mod $mod -vcf ${mod}_HTVCF.vcf -gff ${mod}_GFF.refseq.gff.gz" .
 	" -fasta ${mod}_FASTA.refseq.fa.gz -bam ${mod}_BAM.bam -hive_root_dir " . $ENV{'HIVE_ROOT_DIR'} . ' -pipeline_base_dir ' .
-	$ENV{'HTP_VEP_WORKING_DIR'} . ' -pipeline_host ' . $ENV{'WORM_DBHOST'} . ' -pipeline_user ' . $ENV{'WORM_DBUSER'} .
-	' -pipeline_port ' . $ENV{'WORM_DBPORT'} . ' -vep_dir ' . $ENV{'VEP_DIR'} . 
+	$ENV{'HTP_VEP_WORKING_DIR'} . ' -pipeline_host ' . $ENV{'VEP_DBHOST'} . ' -pipeline_user ' . $ENV{'VEP_DBUSER'} .
+	' -pipeline_port ' . $ENV{'VEP_DBPORT'} . ' -vep_dir ' . $ENV{'VEP_DIR'} . 
 	" -debug_mode 0 -password $password";
     
     run_system_cmd($init_cmd, "Initialising $mod HTP variants VEP eHive pipeline: $init_cmd", $log);
-    my $ehive_url = 'mysql://' . $ENV{'WORM_DBUSER'} . ':' . $password . '@' . $ENV{'WORM_DBHOST'} . ':' . 
-	$ENV{'WORM_DBPORT'} . '/agr_htp_' . lc($mod) . '_vep_ehive';
+    my $ehive_url = 'mysql://' . $ENV{'VEP_DBUSER'} . ':' . $password . '@' . $ENV{'VEP_DBHOST'} . ':' . 
+	$ENV{'VEP_DBPORT'} . '/agr_htp_' . lc($mod) . '_vep_ehive';
     $ENV{EHIVE_URL} = $ehive_url;
  
     run_system_cmd("beekeeper.pl -url $ehive_url -loop", "Running $mod HTP variations VEP eHive pipeline", $log);
@@ -962,8 +962,8 @@ sub backup_pathogenicity_prediction_db {
     my $date = localtime->strftime('%Y%m%d');
     my $dump_file = join('.', $mod, $date, 'sql');
     my $dump_dir = $ENV{'PATH_PRED_SQL_DUMP_DIR'};
-    my $dump_cmd = 'mysqldump -h ' . $ENV{'WORM_DBHOST'} . ' -u ' . $ENV{'WORM_DBUSER'} .
-	' -P ' . $ENV{'WORM_DBPORT'} . ' -p' . $password . ' ' .$ENV{'PATH_PRED_DB_PREFIX'} . 
+    my $dump_cmd = 'mysqldump -h ' . $ENV{'VEP_DBHOST'} . ' -u ' . $ENV{'VEP_DBUSER'} .
+	' -P ' . $ENV{'VEP_DBPORT'} . ' -p' . $password . ' ' .$ENV{'PATH_PRED_DB_PREFIX'} . 
 	$mod . ' > ' . $dump_dir . '/' . $dump_file;
     run_slurm_job($dump_cmd, "Dumping $mod pathogenicity predictions database to $dump_dir", $log, '00:30:00', 4, '/dev/null', '/dev/null');
     run_slurm_job("gzip -f -9 $dump_dir/$dump_file",
