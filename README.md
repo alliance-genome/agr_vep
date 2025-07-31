@@ -47,8 +47,6 @@ Perl libraries:
 - Digest::MD5
 - Bioperl
 
-
-
 ### Environmental variables
 
 The following environmental variables need to be set:
@@ -77,3 +75,68 @@ The following environmental variables need to be set:
 - `TMP_ROOT_DIR` - path to a folder for temporary storage, preferentially with fast read-write access
 
 ### Running
+
+To run the VEP analyses and update pathogenicity prediction score for the Alliance:
+
+   perl $CVS_DIR/AGR/run_agr_vep_pipelines.pl -mod FB,MGI,RGD,SGD,WB,ZFIN,HUMAN -stages 1,2,3,4,5 -password [mysql_password] -url [agr_fms_snapshot_url]
+
+The `-mod` and `-stages` parameters should include only the MODs you want to run the VEP for, and only the stages you want to run (as outlined below).  The `-url` parameter only needs to be specified if you want to download the files from a specific FMS snapshot, rather than using the latest files.
+
+#### Stage 1
+
+Downloads AGR files from the following FMS buckets: FASTA, GFF, VCF, HTVCF, MOD-GFF-BAM-KNOWN, MOD-GFF-BAM-MODEL.
+
+Files are saved in: `${AGR_VEP_BASE_DIR}/${AGR_RELEASE}/${DOWNLOAD_DATE}/` in subfolders with the MOD name
+
+Renames the downloaded files.  If more than one BAM file is downloaded (ie. a file corresponding to known transcripts and a file corresponding to model transcripts), the BAM files are merged into a single file.
+
+If you want to skip stage 1 because it has already been carried out you need to ensure that the files are available in the folders described above, that `$DOWNLOAD_DATE` is set appropriately, and that the filenames are in the following format (not all filetypes will necessarily be present for all MODs):
+- MOD_FASTA.fa
+- MOD_GFF.gff
+- MOD_VCF.vcf
+- MOD_HTVCF.vcf
+- MOD_BAM.bam
+
+#### Stage 2
+
+Processes the GFF and FASTA files for use with the VEP. 
+
+FASTA files are compressed with bgzip.  GFF files are parsed to correct for known issues with using the MOD submitted GFFs and the VEP (largely the addition of biotype tags to the attributes column), then compressed using bgzip, and indexed using tabix.
+
+#### Stage 3
+
+Updates the databases of SIFT and PolyPhen scores after creating backups of the existing databases.
+
+This starts an eHive pipeline.  The pathogenicity prediction score databases are named agr_pathogenicity_predictions_MOD, while the corresponding eHive databases are named agr_pathogenicity_predictions_mod_ehive.
+
+Only translation sequences which have not previously been processed by the pipeline should be analysed by SIFT and/or PolyPhen.  Particularly large numbers of schedule jobs (i.e. 1,000s) is indicative of an issues (possibly with the MOD-submitted files).  You can expect a high job failure rate as the pipeline will attempt to reanalyse translation sequences that failed in previous runs, although there is a maximum number of reattempts to prevent the accumulation of jobs destined to fail.
+
+If you need a quick turnaround then this stage can be skipped.        
+
+#### Stage 4
+
+Runs the VEP on the phenotypic variations (i.e. those in the MOD_VCF.vcf files), and uploads the resulting files to the AGR FMS.
+
+Carries out VEP runs at the transcript and gene level, resulting in MOD_VEPTRANSCRIPT.txt and MOD_VEPGENE.txt files being generated and uploaded to the VEPGENE and VEPTRANSCRIPT FMS buckets.
+
+If you run the script with the `-test` flag then the files will not be uploaded to AGR.
+
+#### Stage 5
+
+Runs the VEP on the high throughput variations (i.e. those in the MOD_HTVCF.vcf files), and uploads the resulting files to the AGR FMS.
+
+The eHive databases for the pipelines started during this stage are named agr_htp_mod_vep_ehive.  The resulting files are named MOD_HTPOSTVEPVCF.vcf.gz and are uploaded to the HTPOSTVEP FMS bucket (unless the script is run with the -test flag).
+
+#### Notes
+
+If there are any issues with the eHive pipelines run during stages 3 or 5 then you can find the log messages in the log_message table of the eHive databases.
+
+The eHive databases are named agr_pathogenicity_predictions_mod_ehive and agr_htp_mod_vep_ehive (with the MOD name in lower case).
+
+If uploading manually (e.g. because you ran the above with the test flag) the the upload commands are in the following format, replacing RGD with the appropriate MOD abbreviation:  
+
+   curl -H "Authorization: Bearer ${TOKEN}" -X POST "https://fms.alliancegenome.org/api/data/submit" -F "${AGR_RELEASE}_HTPOSTVEPVCF_RGD=@RGD_HTPOSTVEPVCF.vcf.gz"
+
+For high-throughput variants, only the RGD files gets uploaded to the HTPOSTVEPVCF bucket.  All VEP annotated VCF files produced by this pipeline need to be uploaded to the appropriate s3 bucket for each MOD, e.g.:
+
+    aws s3 sync ${AGR_VEP_BASE_DIR}/${AGR_RELEASE}/${DOWNLOAD_DATE}/RGD/HTPVEP s3://mod-datadumps/variants/${AGR_RELEASE}/RGD
