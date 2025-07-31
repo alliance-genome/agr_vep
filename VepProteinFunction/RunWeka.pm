@@ -14,13 +14,13 @@ sub run {
     my $self = shift;
 
     my $translation_md5 = $self->required_param('translation_md5');
-
     my $feature_file = $self->required_param('feature_file');
+    my $tmp_root_dir = $self->required_param('tmp_root_dir');
     
     # copy stuff to /tmp to avoid lustre slowness
     my ($output_dir, $feature_filename) = $feature_file =~ /(.+)\/([^\/]+)$/;
     $self->param('output_dir', $output_dir);
-    my $tmp_dir = "/tmp/mqt_weka_${translation_md5}";
+    my $tmp_dir = $tmp_root_dir . "/weka_${translation_md5}";
     $self->param('tmp_dir', $tmp_dir);
     make_path($tmp_dir);
     copy($feature_file, $tmp_dir);

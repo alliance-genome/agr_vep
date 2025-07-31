@@ -37,7 +37,10 @@ sub default_options {
 
         output_dir => $self->o('pipeline_dir').'/hive_output',
 
-        # peptide sequences for all unique translations for this MOD will be dumped to this file
+	# location of temporary dir, preferably with fast read/write access
+	tmp_root_dir => $self->o('tmp_root_dir'),
+
+	# peptide sequences for all unique translations for this MOD will be dumped to this file
 
         pep_fasta => $self->o('pipeline_dir') . '/' . $self->o('mod').'.pep.fa',
         

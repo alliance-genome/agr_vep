@@ -632,7 +632,7 @@ sub calculate_pathogenicity_predictions {
 	' -pipeline_port ' . $ENV{'VEP_DBPORT'} .
 	' -sift_dir ' . $ENV{'SIFT_DIR'} . ' -pph_dir ' . $ENV{'PPH_DIR'} . ' -pph_conf_dir ' . $ENV{'PPH_CONF_DIR'} . '/' . $mod .
 	' -ncbi_dir ' . $ENV{'NCBI_DIR'} . ' -blastdb ' . $ENV{'BLAST_DB'} . ' -pph_blast_db ' . $ENV{'PPH_BLAST_DB'} .
-	' -uniprot_dbs ' . $ENV{'UNIPROT_DBS'} . ' -password ' . $password;
+	' -uniprot_dbs ' . $ENV{'UNIPROT_DBS'} . ' -tmp_root_dir' . $ENV{'TMP_ROOT_DIR'} . ' -password ' . $password;
     
     run_system_cmd($init_cmd, "Initialising $mod pathogenicity prediction eHive pipeline", $log);
     

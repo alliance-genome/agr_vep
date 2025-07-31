@@ -27,6 +27,30 @@ See the README files in each folder for details of the individual pipelines.
 
 The script `run_agr_vep_pipelines.pl` can be used to run both the pipelines above, in addition to running the VEP for phenotypic variants.
 
+### Required software
+
+- SIFT
+- PolyPhen-2 (see README in VepProteinFunction directory for special setup instructions)
+- Ensembl VEP
+- Ensembl Hive
+- bgzip
+- tabix
+- Perl
+- BLAST
+- BLAT
+
+Perl libraries:
+
+- File::Copy
+- File::Path
+- Data::Dumper
+- Digest::MD5
+- Bioperl
+
+
+
+### Environmental variables
+
 The following environmental variables need to be set:
 
 - `AGR_VEP_BASE_DIR` - the directory in which results will be stored
@@ -50,3 +74,6 @@ The following environmental variables need to be set:
 - `BLAST_DB` - path to directory containing UniRef90 BLAST database files
 - `PPH_BLAST_DB` - path to directory containing UniRef100 BLAST database files
 - `UNIPROT_DBS` - path to directory containing uniprot species-specific BLAST protein database files
+- `TMP_ROOT_DIR` - path to a folder for temporary storage, preferentially with fast read-write access
+
+### Running
