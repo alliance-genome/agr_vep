@@ -762,7 +762,7 @@ sub merge_bam_files {
 	}
     }
     else{
-	$log->log_and_die("$mod BAM files could not be found\n") unless -e "${mod}_MOD-GFF-BAM-MODEL.bam";
+	die("$mod BAM files could not be found\n") unless -e "${mod}_MOD-GFF-BAM-MODEL.bam";
 	run_system_cmd("mv ${mod}_MOD-GFF-BAM-MODEL.bam ${mod}_BAM.bam", "Renaming $mod MOD-GFF-BAM-MODEL file", $log_fh); 
     }
     
@@ -1075,39 +1075,39 @@ exit 1;
 
 
 sub run_system_cmd {
-    my ($cmd, $description, $log) = @_;
+    my ($cmd, $description, $log_fh) = @_;
     
-    $log->write_to("$description\n\n");
+    $log_fh->print("$description\n\n");
     
     my $error = system($cmd);
     if ($error) {
-	$log->log_and_die("$description failed: $cmd (Exit code: $error)\n");
+	die("$description failed: $cmd (Exit code: $error)\n");
     }
     
     return;
 }
 
 sub run_slurm_job {
-    my ($cmd, $description, $log, $time, $gb_mem, $stdout, $stderr) = @_;
+    my ($cmd, $description, $log_fh, $time, $gb_mem, $stdout, $stderr) = @_;
 
-    $log->write_to("$description\n\n");
+    $log_fh->print("$description\n\n");
     my $mem = $gb_mem * 1000;
     $mem .= 'm';
     my $job_id = WormSlurm::submit_job_and_wait($cmd, 'production', $mem, $time, $stdout, $stderr);
     print "Running ${cmd} on Slurm with job ID ${job_id}\n";
     my $exit_code = WormSlurm::get_exit_code($job_id);
     if ($exit_code != 0) {
-	$log->log_and_die("Job ${job_id} terminated with exit code ${exit_code} ($cmd)\n") unless $cmd =~ /samtools merge/;
+	die("Job ${job_id} terminated with exit code ${exit_code} ($cmd)\n") unless $cmd =~ /samtools merge/;
     }
     return;
 }
 
 
 sub check_chromosome_map {
-    my ($mod, $log) = @_;
+    my ($mod, $log_fh) = @_;
 
     unless (-e "${mod}_VARIATION.json") {
-	$log->write_to("WARNING: No variations file for $mod - cannot check RefSeq chromosome IDs are correct\n");
+	$log_fh->print("WARNING: No variations file for $mod - cannot check RefSeq chromosome IDs are correct\n");
 	return;
     }
     
@@ -1118,7 +1118,7 @@ sub check_chromosome_map {
 	my $refseq_chr = $variation->{sequenceOfReferenceAccessionNumber};
 	next unless $refseq_chr =~ /^RefSeq:(.+)$/;
 	if ($1 ne $REFSEQ_CHROMOSOMES{$mod}{$variation->{chromosome}}) {
-	   $log->log_and_die("RefSeq chromosome ID does not match version submitted in variation JSON for $mod: " .
+	   die("RefSeq chromosome ID does not match version submitted in variation JSON for $mod: " .
 			     $variation->{chromosome} . " found $1 but should be " . 
 			     $REFSEQ_CHROMOSOMES{$mod}{$variation->{chromosome}} . ' for variation ' .
 			     $variation->{alleleId} . "\n");
@@ -1130,13 +1130,13 @@ sub check_chromosome_map {
     
 
 sub convert_fasta_headers {
-    my ($mod, $log) = @_;
+    my ($mod, $log_fh) = @_;
 
     return if -e "${mod}_FASTA.refseq.fa";
 
     print "Converting $mod FASTA chromosome IDs to RefSeq\n";
-    open (IN, '<', "${mod}_FASTA.fa") or $log->log_and_die("Cannot open ${mod}_FASTA.fa for reading\n");
-    open (OUT, '>', "${mod}_FASTA.refseq.fa") or $log->log_and_die("Cannot open ${mod}_FASTA.refseq.fa for writing\n");
+    open (IN, '<', "${mod}_FASTA.fa") or die("Cannot open ${mod}_FASTA.fa for reading\n");
+    open (OUT, '>', "${mod}_FASTA.refseq.fa") or die("Cannot open ${mod}_FASTA.refseq.fa for writing\n");
     while (<IN>) {
 	if ($_ =~ /^>(\S+)/) {
 	    if (exists $REFSEQ_CHROMOSOMES{$mod}{$1}) {
@@ -1154,7 +1154,7 @@ sub convert_fasta_headers {
 
 
 sub convert_vcf_chromosomes {
-    my ($mod, $type, $log) = @_;
+    my ($mod, $type, $log_fh) = @_;
 
     return unless -e "${mod}_${type}.vcf";
     return if -e "${mod}_${type}.refseq.vcf";
@@ -1162,8 +1162,8 @@ sub convert_vcf_chromosomes {
     my $reverse_map = get_reverse_chromosome_map($mod);
     
     print "Converting $mod $type chromosome IDs to RefSeq\n";
-    open (IN, '<', "${mod}_${type}.vcf") or $log->log_and_die("Cannot open ${mod}_${type}.vcf for reading\n");
-    open (OUT, '>', "${mod}_${type}.refseq.vcf") or $log->log_and_die("Cannot open ${mod}_${type}.refseq.vcf for writing\n");
+    open (IN, '<', "${mod}_${type}.vcf") or die("Cannot open ${mod}_${type}.vcf for reading\n");
+    open (OUT, '>', "${mod}_${type}.refseq.vcf") or die("Cannot open ${mod}_${type}.refseq.vcf for writing\n");
     while (<IN>) {
 	if ($_ !~ /^#/) {
 	    my @columns = split("\t", $_);
@@ -1173,7 +1173,7 @@ sub convert_vcf_chromosomes {
 		next;
 	    }
 	    else {
-		$log->log_and_die("Could not map $mod chromosome in $type " . $columns[0] . " to RefSeq ID\n")
+		die("Could not map $mod chromosome in $type " . $columns[0] . " to RefSeq ID\n")
 		    unless exists $reverse_map->{$columns[0]};
 	    }
 	}
@@ -1199,13 +1199,13 @@ sub get_reverse_chromosome_map {
 
 
 sub cleanup_intermediate_files {
-    my ($mod, $log) = @_;
+    my ($mod, $log_fh) = @_;
 
     for my $file ("${mod}_GFF.refseq.gff", "${mod}_GFF.refseq.gff.gz", "${mod}_GFF.refseq.gff.gz.tbi", 
 		  "${mod}_FASTA.refseq.fa", "${mod}_FASTA.refseq.fa.gz", "${mod}_FASTA.refseq.fa.gz",
 		  "${mod}_FASTA.refseq.fa.gz.fai", "${mod}_FASTA.refseq.fa.gz.gzi",
 		  "${mod}_VCF.refseq.vcf") {
-	run_system_cmd("rm $file", "Deleting $file", $log) if -e $file;
+	run_system_cmd("rm $file", "Deleting $file", $log_fh) if -e $file;
     }
 
     return;
@@ -1213,13 +1213,13 @@ sub cleanup_intermediate_files {
  
 
 sub get_hgnc_id_map {
-    my $log = shift;
+    my $log_fh = shift;
 
     my ($file) = $HGNC_FILE_URL =~ /\/([^\/]+)$/;
-    run_system_cmd("curl -O $HGNC_FILE_URL", 'Downloading HGNC gene ID map file', $log) unless -e $file;
+    run_system_cmd("curl -O $HGNC_FILE_URL", 'Downloading HGNC gene ID map file', $log_fh) unless -e $file;
 
     my $first_line = 1;
-    open (HGNC, '<', $file) or $log->log_and_die("Cannot open $file for reading\n");
+    open (HGNC, '<', $file) or die("Cannot open $file for reading\n");
     my %ids_to_store = map {$_ => 1} @IDS_TO_MAP;
     my @ix_to_store;
     my %id_map;
