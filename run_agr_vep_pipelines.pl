@@ -290,7 +290,7 @@ my $start_time = strftime('%Y%m%d%H%M%S', localtime);
 my @mods = split(',', $mods_string);
 $logfile = "${BASE_DIR}/submission.${start_time}.log" if !$logfile;;
 
-my $log_fh = file($logfile)->openw;
+open(my $log_fh, ">", $logfile);
 download_from_agr(\@mods, $start_time, $url, $overwrite, $external_human_gff, $external_mouse_fasta, $log_fh) if $stages =~ /1/;
 
 for my $mod (@mods) {
@@ -301,9 +301,9 @@ for my $mod (@mods) {
 	    process_input_files($mod, $external_human_gff, $log_fh);
 	}
 	else {
-	    $log_fh->print("Skipping processing of input files for $mod " .
-			   'as input files unchanged and no further analyses ' .
-			   "are being carried out\n");
+	    print $log_fh "Skipping processing of input files for $mod " .
+		'as input files unchanged and no further analyses ' .
+		"are being carried out\n";
 	}
     }
     if ($stages =~ /3/) {
@@ -311,8 +311,8 @@ for my $mod (@mods) {
 	    calculate_pathogenicity_predictions($mod, $password, $test, $log_fh);
 	}
 	else {
-	    $log_fh->print('Skipping pathogenicity prediction calculations ' .
-			   "for $mod as input files unchanged\n\n");
+	    print $log_fh 'Skipping pathogenicity prediction calculations ' .
+			   "for $mod as input files unchanged\n\n";
 	}
     }
     if ($stages =~ /4/) {
@@ -321,8 +321,8 @@ for my $mod (@mods) {
 	    update_checksums($mod, 'VCF.vcf', $checksums, $log_fh) if !$test;
 	}
 	else {
-	    $log_fh->print('Skipping VEP analysis of phenotypic variants ' .
-			   "for $mod as input files unchanged\n\n");
+	    print $log_fh 'Skipping VEP analysis of phenotypic variants ' .
+			   "for $mod as input files unchanged\n\n";
 	}
     }
     if ($stages =~ /5/) {
@@ -331,8 +331,8 @@ for my $mod (@mods) {
 	    update_checksums($mod, 'HTVCF.vcf', $checksums, $log_fh) if !$test;
 	}
 	else {
-	    $log_fh->print('Skipping VEP analysis of HTP variants ' .
-			   "for $mod as input files unchanged\n\n");
+	    print $log_fh 'Skipping VEP analysis of HTP variants ' .
+			   "for $mod as input files unchanged\n\n";
 	}
     }
     if (!$test and $stages =~ /3/ and $stages =~ /4/ and $stages =~ /5/) {
@@ -343,6 +343,7 @@ for my $mod (@mods) {
     cleanup_intermediate_files($mod, $log_fh) if $cleanup;
 }
 
+close($log_fh)
 exit(0);
 
 
@@ -460,7 +461,7 @@ sub download_from_agr {
 	    }
 	    my $extension = $DATATYPE_EXTENSIONS{$datatype};
 	    if (-e "${mod}_${datatype}.${extension}" and !$overwrite) {
-		$log_fh->print("Using previously downloaded $mod $datatype\n");
+		print $log_fh "Using previously downloaded $mod $datatype\n";
 		next;
 	    }
 	    my ($filename) = $download_urls->{$mod}{$datatype} =~ /\/([^\/]+)$/;
@@ -672,7 +673,7 @@ sub run_vep_on_phenotypic_variations {
 
 		my ($before, $hgvsg, $after) = $columns[13] =~ /(.*HGVSg=)([^;]+)(.*)/;
 		if (defined $hgvsg) {
-		    $log_fh->print('WARNING: HGVSg in input VCF (' . $columns[0] . ") doesn't match VEP generated HGVSg ($hgvsg)\n")
+		    print $log_fh 'WARNING: HGVSg in input VCF (' . $columns[0] . ") doesn't match VEP generated HGVSg ($hgvsg)\n"
 			unless $columns[0] eq $hgvsg;
 		    # HGVSg in extras column needs to have chromosome name not RefSeq chr ID
 		    my @hgvsg_parts = split(':', $hgvsg);
@@ -737,10 +738,10 @@ sub submit_data {
     my $response_json = `$cmd`;
     my $response = decode_json($response_json);
     if ($response->{status} eq 'failed') {
-	$log_fh->print("ERROR: Upload of $mod $fms_datatype failed:\n$response_json\n\n");
+	print $log_fh "ERROR: Upload of $mod $fms_datatype failed:\n$response_json\n\n";
     } 
     else {
-	$log_fh->print("Upload of $mod ${fms_datatype} succeeded\n\n");
+	print $log_fh "Upload of $mod ${fms_datatype} succeeded\n\n";
     }
 
     return;
@@ -791,7 +792,7 @@ sub remove_mirna_primary_transcripts {
     my $log_fh = shift;
     my (%mirna_parents, %parents);
 
-    $log_fh->print("Getting RefSeq HUMAN miRNA details from GFF\n");
+    print $log_fh "Getting RefSeq HUMAN miRNA details from GFF\n";
 
     # Do first pass to get parents
     open (GFF, "grep -v '^#' HUMAN_GFF.gff |") or die("Could not open HUMAN_GFF.gff for reading\n");
@@ -809,7 +810,7 @@ sub remove_mirna_primary_transcripts {
     }
     close (GFF);
 
-    $log_fh->print("Removing miRNA primary transcripts from HUMAN GFF\n");
+    print $log_fh "Removing miRNA primary transcripts from HUMAN GFF\n";
 
     open (IN, '< HUMAN_GFF.gff') or die("Could not open HUMAN_GFF.gff for reading\n");
     open (OUT, '> HUMAN_GFF.tmp.gff') or die("Could not open HUMAN_GFF.tmp.gff for writing\n");
@@ -880,7 +881,7 @@ sub munge_gff {
 	$hgnc_id_map = get_hgnc_id_map($log_fh);
     }
 
-    $log_fh->write_to("Munging $mod GFF\n");
+    print $log_fh "Munging $mod GFF\n";
     open(IN, "grep -v '^#' ${mod}_GFF.gff |") or die("Could not open ${mod}_GFF.gff for reading\n");
     open(OUT, "> ${mod}_GFF.refseq.gff") or die("Could not open ${mod}_GFF.refseq.gff for writing\n");
     while (<IN>) {
@@ -1077,7 +1078,7 @@ exit 1;
 sub run_system_cmd {
     my ($cmd, $description, $log_fh) = @_;
     
-    $log_fh->print("$description\n\n");
+    print $log_fh "$description\n\n";
     
     my $error = system($cmd);
     if ($error) {
@@ -1090,7 +1091,7 @@ sub run_system_cmd {
 sub run_slurm_job {
     my ($cmd, $description, $log_fh, $time, $gb_mem, $stdout, $stderr) = @_;
 
-    $log_fh->print("$description\n\n");
+    print $log_fh "$description\n\n";
     my $mem = $gb_mem * 1000;
     $mem .= 'm';
     my $job_id = WormSlurm::submit_job_and_wait($cmd, 'production', $mem, $time, $stdout, $stderr);
@@ -1107,7 +1108,7 @@ sub check_chromosome_map {
     my ($mod, $log_fh) = @_;
 
     unless (-e "${mod}_VARIATION.json") {
-	$log_fh->print("WARNING: No variations file for $mod - cannot check RefSeq chromosome IDs are correct\n");
+	print $log_fh "WARNING: No variations file for $mod - cannot check RefSeq chromosome IDs are correct\n";
 	return;
     }
     
