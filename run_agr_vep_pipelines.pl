@@ -343,7 +343,7 @@ for my $mod (@mods) {
     cleanup_intermediate_files($mod, $log_fh) if $cleanup;
 }
 
-close($log_fh)
+close($log_fh);
 exit(0);
 
 
