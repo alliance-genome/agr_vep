@@ -1094,7 +1094,7 @@ sub run_slurm_job {
     print $log_fh "$description\n\n";
     my $mem = $gb_mem * 1000;
     $mem .= 'm';
-    my $job_id = WormSlurm::submit_job_and_wait($cmd, 'production', $mem, $time, $stdout, $stderr);
+    my $job_id = WormSlurm::submit_job_and_wait($cmd, 'normal', $mem, $time, $stdout, $stderr);
     print "Running ${cmd} on Slurm with job ID ${job_id}\n";
     my $exit_code = WormSlurm::get_exit_code($job_id);
     if ($exit_code != 0) {
