@@ -1166,7 +1166,7 @@ sub convert_vcf_chromosomes {
     open (IN, '<', "${mod}_${type}.vcf") or die("Cannot open ${mod}_${type}.vcf for reading\n");
     open (OUT, '>', "${mod}_${type}.refseq.vcf") or die("Cannot open ${mod}_${type}.refseq.vcf for writing\n");
     while (<IN>) {
-	if ($_ !~ /^#/) {
+	if ($_ !~ /^#/  && $_ !~ /^SLURM/ && $! =~ /^=/) {
 	    my @columns = split("\t", $_);
 	    if (exists $REFSEQ_CHROMOSOMES{$mod}{$columns[0]}) {
 		$columns[0] = $REFSEQ_CHROMOSOMES{$mod}{$columns[0]};
