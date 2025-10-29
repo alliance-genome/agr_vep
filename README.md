@@ -33,6 +33,7 @@ The script `run_agr_vep_pipelines.pl` can be used to run both the pipelines abov
 - PolyPhen-2 (see README in VepProteinFunction directory for special setup instructions)
 - Ensembl VEP
 - Ensembl Hive
+- Ensembl Variation (no installation required, modules folder to be added to PERL5LIB)
 - bgzip
 - tabix
 - Perl
