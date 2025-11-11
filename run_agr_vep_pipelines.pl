@@ -608,12 +608,12 @@ sub process_input_files {
   
     munge_gff($mod, $external_human_gff, $log_fh);
     run_system_cmd("cp ${mod}_FASTA.refseq.fa ${mod}_FASTA.refseq.fa.copy", "Making a copy of $mod FASTA", $log_fh);
-    run_slurm_job("bgzip -c ${mod}_FASTA.refseq.fa", "Compressing $mod FASTA", $log_fh, '01:00:00', 4, "${mod}_FASTA.refseq.fa.gz", '/dev/null');
+    run_slurm_job("bgzip ${mod}_FASTA.refseq.fa", "Compressing $mod FASTA", $log_fh, '01:00:00', 4, '/dev/null', '/dev/null');
     run_system_cmd("mv ${mod}_FASTA.refseq.fa.copy ${mod}_FASTA.refseq.fa", "Renaming $mod FASTA", $log_fh);
     run_slurm_job("sort -k1,1 -k4,4n -k5,5n -o ${mod}_GFF.refseq.sorted.gff -t\$'\\t' ${mod}_GFF.refseq.gff", "Sorting $mod GFF", $log_fh, '00:30:00', 4, '/dev/null', '/dev/null');
     run_system_cmd("mv ${mod}_GFF.refseq.sorted.gff ${mod}_GFF.refseq.gff", "Renaming sorted GFF", $log_fh);
     run_system_cmd("cp ${mod}_GFF.refseq.gff ${mod}_GFF.refseq.gff.copy", "Making a copy of $mod GFF", $log_fh);
-    run_slurm_job("bgzip -c ${mod}_GFF.refseq.gff", "Compressing sorted GFF", $log_fh, '01:00:00', 4, '/dev/null', '/dev/null');
+    run_slurm_job("bgzip ${mod}_GFF.refseq.gff", "Compressing sorted GFF", $log_fh, '01:00:00', 4, '/dev/null', '/dev/null');
     run_system_cmd("mv ${mod}_GFF.refseq.gff.copy ${mod}_GFF.refseq.gff", "Renaming $mod GFF", $log_fh);
     run_slurm_job("tabix -p gff ${mod}_GFF.refseq.gff.gz", "Indexing $mod GFF", $log_fh, '01:00:00', 4, '/dev/null', '/dev/null');
     
