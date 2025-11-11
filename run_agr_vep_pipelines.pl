@@ -1085,7 +1085,7 @@ sub run_system_cmd {
     print $log_fh "$description\n\n";
     
     my $error = system($cmd);
-    if ($error) {
+    if ($error && $cmd !~ /^ehive/) {
 	die("$description failed: $cmd (Exit code: $error)\n");
     }
     
