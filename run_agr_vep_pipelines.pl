@@ -626,7 +626,7 @@ sub calculate_pathogenicity_predictions {
     
     backup_pathogenicity_prediction_db($mod, $password, $log_fh);
     
-    my $init_cmd = "ehive init_pipeline.pl VepProteinFunction::VepProteinFunction_conf -mod $mod" .
+    my $init_cmd = "init_pipeline.pl VepProteinFunction::VepProteinFunction_conf -mod $mod" .
 	" -agr_fasta ${mod}_FASTA.refseq.fa -agr_gff ${mod}_GFF.refseq.gff -agr_bam ${mod}_BAM.bam" . 
 	' -hive_root_dir ' . $ENV{'HIVE_ROOT_DIR'} . ' -pipeline_base_dir ' . $ENV{'PATH_PRED_WORKING_DIR'} .
 	' -pipeline_host ' . $ENV{'VEP_DBHOST'} . ' -pipeline_user ' . $ENV{'VEP_DBUSER'} .
@@ -640,7 +640,7 @@ sub calculate_pathogenicity_predictions {
     my $ehive_url = 'mysql://' . $ENV{'VEP_DBUSER'} . ':' . $password . '@' . $ENV{'VEP_DBHOST'} . ':' . 
 	$ENV{'VEP_DBPORT'} . '/agr_pathogenicity_predictions_' . lc($mod) . '_ehive';
     $ENV{EHIVE_URL} = $ehive_url;
-    run_system_cmd("ehive beekeeper.pl -url $ehive_url -loop", "Running $mod pathogenicity prediction eHive pipeline", $log_fh);
+    run_system_cmd("beekeeper.pl -url $ehive_url -loop", "Running $mod pathogenicity prediction eHive pipeline", $log_fh);
     
     return;
 }
@@ -708,7 +708,7 @@ sub run_vep_on_phenotypic_variations {
 sub run_vep_on_htp_variations{
     my ($mod, $password, $test, $log_fh) = @_;
 
-    my $init_cmd = "ehive init_pipeline.pl ModVep::ModVep_conf -mod $mod -vcf ${mod}_HTVCF.vcf -gff ${mod}_GFF.refseq.gff.gz" .
+    my $init_cmd = "init_pipeline.pl ModVep::ModVep_conf -mod $mod -vcf ${mod}_HTVCF.vcf -gff ${mod}_GFF.refseq.gff.gz" .
 	" -fasta ${mod}_FASTA.refseq.fa.gz -bam ${mod}_BAM.bam -hive_root_dir " . $ENV{'HIVE_ROOT_DIR'} . ' -pipeline_base_dir ' .
 	$ENV{'HTP_VEP_WORKING_DIR'} . ' -pipeline_host ' . $ENV{'VEP_DBHOST'} . ' -pipeline_user ' . $ENV{'VEP_DBUSER'} .
 	' -pipeline_port ' . $ENV{'VEP_DBPORT'} . ' -vep_dir ' . $ENV{'VEP_DIR'} . 
@@ -719,7 +719,7 @@ sub run_vep_on_htp_variations{
 	$ENV{'VEP_DBPORT'} . '/agr_htp_' . lc($mod) . '_vep_ehive';
     $ENV{EHIVE_URL} = $ehive_url;
  
-    run_system_cmd("ehive beekeeper.pl -url $ehive_url -loop", "Running $mod HTP variations VEP eHive pipeline", $log_fh);
+    run_system_cmd("beekeeper.pl -url $ehive_url -loop", "Running $mod HTP variations VEP eHive pipeline", $log_fh);
     run_slurm_job("cp " . $ENV{'HTP_VEP_WORKING_DIR'} . "/${mod}_vep/${mod}.vep.vcf.gz .", "Copying $mod combined HTP variations VEP output", $log_fh, '01:00:00', 1, '/dev/null', '/dev/null');
     if ($mod eq 'RGD') {
 	submit_data($mod, 'HTPOSTVEPVCF', "${mod}.vep.vcf.gz", $log_fh) unless $test;
@@ -1085,7 +1085,7 @@ sub run_system_cmd {
     print $log_fh "$description\n\n";
     
     my $error = system($cmd);
-    if ($error && $cmd !~ /^ehive/) {
+    if ($error) {
 	die("$description failed: $cmd (Exit code: $error)\n");
     }
     
